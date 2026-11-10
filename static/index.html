@@ -645,10 +645,57 @@
           </section>
 
 
-          <section class="card music-card" id="musicCard">
+          <section class="card sfx-card" id="sfxCard">
             <div class="card-head compact">
               <div class="head-title">
                 <span class="section-no">05</span>
+                <div>
+                  <span class="kicker">LIFE SFX</span>
+                  <h2>生活音效</h2>
+                </div>
+              </div>
+              <label class="switch" title="启用生活音效">
+                <input type="checkbox" id="sfxToggle">
+                <span></span>
+              </label>
+            </div>
+            <div class="sfx-body" id="sfxBody" hidden>
+              <div class="sfx-row">
+                <label class="field">
+                  <span>插入方式</span>
+                  <select id="sfxMode">
+                    <option value="fixed">固定间隔</option>
+                    <option value="random">随机间隔</option>
+                  </select>
+                </label>
+                <label class="field">
+                  <span>间隔句数</span>
+                  <input type="number" id="sfxEvery" min="2" max="30" step="1" value="5">
+                </label>
+              </div>
+              <div class="sfx-types">
+                <span class="sfx-label">音效类型</span>
+                <label><input type="checkbox" data-sfx-type="cough" checked> 轻咳</label>
+                <label><input type="checkbox" data-sfx-type="water" checked> 喝水</label>
+                <label><input type="checkbox" data-sfx-type="throat" checked> 清嗓子</label>
+                <label><input type="checkbox" data-sfx-type="inhale" checked> 吸气</label>
+              </div>
+              <div class="sfx-volume">
+                <div class="slider-head"><span>音效音量</span><b id="sfxVolumeVal">35%</b></div>
+                <input type="range" id="sfxVolume" min="0" max="100" step="5" value="35">
+              </div>
+              <div class="sfx-actions">
+                <button class="btn small" id="sfxTestBtn" type="button">试听一次</button>
+                <span id="sfxState">关闭</span>
+              </div>
+              <small>每读完设定句数，插入一次轻声生活音效，再继续下一句。音效由程序合成，不是真人录音。</small>
+            </div>
+          </section>
+
+          <section class="card music-card" id="musicCard">
+            <div class="card-head compact">
+              <div class="head-title">
+                <span class="section-no">06</span>
                 <div>
                   <span class="kicker">SHOWROOM MUSIC</span>
                   <h2>背景音乐</h2>

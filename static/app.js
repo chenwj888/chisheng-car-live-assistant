@@ -35,6 +35,11 @@
     outputDeviceId: '',
     musicVolume: 18,
     musicMode: 'random',
+    sfxEnabled: false,
+    sfxMode: 'fixed',
+    sfxEvery: 5,
+    sfxTypes: ['cough', 'water', 'throat', 'inhale'],
+    sfxVolume: 35,
     autoKokoro: true,
     multiOrder: 'preset',
     generalIntro: '家人们，欢迎来到广汽上海锦仓店。我们1999年开业，地址在浦东高科西路1888号，广汽本田、广汽传祺都能看。新进来的家人先点点赞，左上角点个关注，转发给正在看车的朋友；有问题直接打在公屏上，我一条条回。到店可以试驾、算金融、做置换，具体优惠和现车以当天店内政策为准。',
@@ -116,6 +121,8 @@
     blocklistDirty: false,
     kokoroTimer: null,
     kokoroAttempts: 0,
+    sfxCount: 0,
+    sfxThreshold: 0,
     serverRetryTimer: null,
     serverRetryCount: 0,
     musicTracks: [],
@@ -190,6 +197,7 @@
       'pitchVal', 'volumeRange', 'volumeVal', 'voiceTipText',
       'outputSelect', 'refreshOutputBtn', 'outputHint', 'packBtn', 'packState', 'autoKokoroToggle',
       'multiModels', 'multiAllBtn', 'multiClearBtn', 'multiBuildBtn', 'multiIntroToggle', 'multiPanel', 'multiGeneralText',
+      'sfxToggle', 'sfxBody', 'sfxMode', 'sfxEvery', 'sfxVolume', 'sfxVolumeVal', 'sfxTestBtn', 'sfxState',
       'singleIntroToggle', 'singleIntroText',
       'blockedWordsInput', 'blockedSaveBtn', 'blockedUploadBtn', 'blockedFileInput', 'blockedState', 'blockedBtnCount',
       'blockedExportWordsBtn', 'blockedExportReplacementsBtn', 'blockedImportReplacementsBtn', 'blockedReplacementsFileInput',
@@ -918,6 +926,11 @@
     next.outputDeviceId = String(next.outputDeviceId || '');
     next.musicVolume = clamp(Number(next.musicVolume == null ? 18 : next.musicVolume), 0, 100);
     next.musicMode = next.musicMode === 'sequential' ? 'sequential' : 'random';
+    next.sfxEnabled = next.sfxEnabled === true;
+    next.sfxMode = next.sfxMode === 'random' ? 'random' : 'fixed';
+    next.sfxEvery = clamp(Number(next.sfxEvery) || 5, 2, 30);
+    next.sfxTypes = Array.isArray(next.sfxTypes) ? next.sfxTypes.filter(function (type) { return ['cough', 'water', 'throat', 'inhale'].includes(type); }) : ['cough', 'water', 'throat', 'inhale'];
+    next.sfxVolume = clamp(Number(next.sfxVolume == null ? 35 : next.sfxVolume), 0, 100);
     next.autoKokoro = next.autoKokoro !== false;
     if (['edge', 'azure', 'volcengine', 'cosyvoice'].includes(next.engine)) next.autoKokoro = false;
     next.multiOrder = next.multiOrder === 'shuffle' ? 'shuffle' : 'preset';
@@ -1004,6 +1017,17 @@
     els.volumeVal.textContent = Math.round(state.settings.volume * 100) + '%';
   }
 
+  function updateSfxUI() {
+    if (els.sfxBody) els.sfxBody.hidden = !state.settings.sfxEnabled;
+    if (els.sfxState) {
+      els.sfxState.textContent = state.settings.sfxEnabled
+        ? (state.settings.sfxMode === 'random'
+          ? '随机 · 2–' + state.settings.sfxEvery + ' 句'
+          : '每 ' + state.settings.sfxEvery + ' 句')
+        : '关闭';
+    }
+  }
+
   function applySettingsToUI() {
     els.modeSelect.value = state.settings.mode;
     els.modeHint.textContent = Core.MODES[state.settings.mode].hint;
@@ -1037,6 +1061,16 @@
     if (els.multiGeneralText) els.multiGeneralText.value = state.settings.generalIntro;
     if (els.singleIntroToggle) els.singleIntroToggle.checked = state.settings.singleIntro;
     if (els.singleIntroText) els.singleIntroText.value = state.settings.singleIntroText;
+    if (els.sfxToggle) els.sfxToggle.checked = state.settings.sfxEnabled;
+    if (els.sfxBody) els.sfxBody.hidden = !state.settings.sfxEnabled;
+    if (els.sfxMode) els.sfxMode.value = state.settings.sfxMode;
+    if (els.sfxEvery) els.sfxEvery.value = String(state.settings.sfxEvery);
+    if (els.sfxVolume) els.sfxVolume.value = String(state.settings.sfxVolume);
+    if (els.sfxVolumeVal) els.sfxVolumeVal.textContent = Math.round(state.settings.sfxVolume) + '%';
+    document.querySelectorAll('[data-sfx-type]').forEach(function (input) {
+      input.checked = state.settings.sfxTypes.includes(input.getAttribute('data-sfx-type'));
+    });
+    updateSfxUI();
     document.querySelectorAll('input[name="multiOrder"]').forEach(function (radio) {
       radio.checked = radio.value === state.settings.multiOrder;
     });
@@ -1999,6 +2033,16 @@
     if (els.multiGeneralText) els.multiGeneralText.value = state.settings.generalIntro;
     if (els.singleIntroToggle) els.singleIntroToggle.checked = state.settings.singleIntro;
     if (els.singleIntroText) els.singleIntroText.value = state.settings.singleIntroText;
+    if (els.sfxToggle) els.sfxToggle.checked = state.settings.sfxEnabled;
+    if (els.sfxBody) els.sfxBody.hidden = !state.settings.sfxEnabled;
+    if (els.sfxMode) els.sfxMode.value = state.settings.sfxMode;
+    if (els.sfxEvery) els.sfxEvery.value = String(state.settings.sfxEvery);
+    if (els.sfxVolume) els.sfxVolume.value = String(state.settings.sfxVolume);
+    if (els.sfxVolumeVal) els.sfxVolumeVal.textContent = Math.round(state.settings.sfxVolume) + '%';
+    document.querySelectorAll('[data-sfx-type]').forEach(function (input) {
+      input.checked = state.settings.sfxTypes.includes(input.getAttribute('data-sfx-type'));
+    });
+    updateSfxUI();
     document.querySelectorAll('input[name="multiOrder"]').forEach(function (radio) {
       radio.checked = radio.value === state.settings.multiOrder;
     });
@@ -2630,13 +2674,21 @@
 
   function nextModelName(fromIndex) {
     const queue = state.queue || [];
-    for (let i = Math.max(0, fromIndex) + 1; i < queue.length; i += 1) {
-      if (queue[i].kind === 'model' && queue[i].modelName) return queue[i].modelName;
+    const start = Math.max(0, fromIndex);
+    const current = queue[start];
+    const currentName = current && current.kind === 'model' ? current.modelName : '';
+    for (let i = start + 1; i < queue.length; i += 1) {
+      if (queue[i].kind === 'model' && queue[i].modelName && queue[i].modelName !== currentName) {
+        return queue[i].modelName;
+      }
     }
     if (state.settings.loop) {
-      for (let i = 0; i <= Math.min(fromIndex, queue.length - 1); i += 1) {
-        if (queue[i].kind === 'model' && queue[i].modelName) return queue[i].modelName;
+      for (let i = 0; i <= start; i += 1) {
+        if (queue[i].kind === 'model' && queue[i].modelName && queue[i].modelName !== currentName) {
+          return queue[i].modelName;
+        }
       }
+      if (currentName) return currentName;
     }
     return '本轮结束';
   }
@@ -2746,26 +2798,182 @@
     scheduleAdvance(run);
   }
 
+  function resetSfxCounter() {
+    state.sfxCount = 0;
+    state.sfxThreshold = 0;
+  }
+
+  function nextSfxThreshold() {
+    const every = clamp(Number(state.settings.sfxEvery) || 5, 2, 30);
+    if (state.settings.sfxMode === 'random') {
+      return 2 + Math.floor(Math.random() * Math.max(1, every - 1));
+    }
+    return every;
+  }
+
+  function takeSfxType(isLast) {
+    if (isLast || !state.settings.sfxEnabled || Number(state.settings.sfxVolume) <= 0) return null;
+    const item = state.queue[state.current];
+    if (!item || item.kind !== 'model') return null;
+    const types = (state.settings.sfxTypes || []).filter(function (type) {
+      return ['cough', 'water', 'throat', 'inhale'].includes(type);
+    });
+    if (!types.length) return null;
+    if (!state.sfxThreshold) state.sfxThreshold = nextSfxThreshold();
+    state.sfxCount += 1;
+    if (state.sfxCount < state.sfxThreshold) return null;
+    state.sfxCount = 0;
+    state.sfxThreshold = nextSfxThreshold();
+    return types[Math.floor(Math.random() * types.length)];
+  }
+
+  function makeSfxNoise(ctx, seconds) {
+    const buffer = ctx.createBuffer(1, Math.max(1, Math.floor(ctx.sampleRate * seconds)), ctx.sampleRate);
+    const data = buffer.getChannelData(0);
+    for (let i = 0; i < data.length; i += 1) data[i] = Math.random() * 2 - 1;
+    return buffer;
+  }
+
+  async function playSynthSfx(type) {
+    if (!state.audioCtx || !state.audioGain) {
+      try { await ensureAudioContext(); } catch (_) { return; }
+    }
+    if (!state.audioCtx || !state.audioGain) return;
+    const ctx = state.audioCtx;
+    if (ctx.state === 'suspended') {
+      try { await ctx.resume(); } catch (_) { return; }
+    }
+    const now = ctx.currentTime + 0.025;
+    const master = ctx.createGain();
+    const level = Math.pow(clamp(Number(state.settings.sfxVolume) / 100, 0, 1), 0.9) * 0.55;
+    if (level <= 0) return;
+    master.gain.value = level;
+    master.connect(state.audioGain);
+
+    let duration = 0.45;
+    try {
+      if (type === 'water') {
+        duration = 0.5;
+        for (let i = 0; i < 3; i += 1) {
+          const start = now + i * 0.115;
+          const osc = ctx.createOscillator();
+          const env = ctx.createGain();
+          const tone = 760 - i * 120;
+          osc.type = 'sine';
+          osc.frequency.setValueAtTime(tone, start);
+          osc.frequency.exponentialRampToValueAtTime(Math.max(120, tone * 0.45), start + 0.16);
+          env.gain.setValueAtTime(0.0001, start);
+          env.gain.exponentialRampToValueAtTime(0.7, start + 0.012);
+          env.gain.exponentialRampToValueAtTime(0.0001, start + 0.2);
+          osc.connect(env);
+          env.connect(master);
+          osc.start(start);
+          osc.stop(start + 0.23);
+        }
+      } else if (type === 'inhale') {
+        duration = 0.68;
+        const src = ctx.createBufferSource();
+        const filter = ctx.createBiquadFilter();
+        const env = ctx.createGain();
+        src.buffer = makeSfxNoise(ctx, 0.72);
+        filter.type = 'bandpass';
+        filter.frequency.setValueAtTime(720, now);
+        filter.frequency.linearRampToValueAtTime(1300, now + 0.55);
+        filter.Q.value = 0.8;
+        env.gain.setValueAtTime(0.0001, now);
+        env.gain.linearRampToValueAtTime(0.42, now + 0.24);
+        env.gain.linearRampToValueAtTime(0.0001, now + 0.64);
+        src.connect(filter);
+        filter.connect(env);
+        env.connect(master);
+        src.start(now);
+        src.stop(now + 0.7);
+      } else if (type === 'throat') {
+        duration = 0.38;
+        const src = ctx.createBufferSource();
+        const filter = ctx.createBiquadFilter();
+        const env = ctx.createGain();
+        src.buffer = makeSfxNoise(ctx, 0.4);
+        filter.type = 'lowpass';
+        filter.frequency.value = 420;
+        env.gain.setValueAtTime(0.0001, now);
+        env.gain.exponentialRampToValueAtTime(0.5, now + 0.025);
+        env.gain.exponentialRampToValueAtTime(0.0001, now + 0.34);
+        src.connect(filter);
+        filter.connect(env);
+        env.connect(master);
+        src.start(now);
+        src.stop(now + 0.38);
+        const hum = ctx.createOscillator();
+        const humGain = ctx.createGain();
+        hum.type = 'sine';
+        hum.frequency.value = 145;
+        humGain.gain.setValueAtTime(0.0001, now);
+        humGain.gain.exponentialRampToValueAtTime(0.16, now + 0.03);
+        humGain.gain.exponentialRampToValueAtTime(0.0001, now + 0.3);
+        hum.connect(humGain);
+        humGain.connect(master);
+        hum.start(now);
+        hum.stop(now + 0.32);
+      } else {
+        duration = 0.48;
+        const src = ctx.createBufferSource();
+        const filter = ctx.createBiquadFilter();
+        const env = ctx.createGain();
+        src.buffer = makeSfxNoise(ctx, 0.5);
+        filter.type = 'bandpass';
+        filter.frequency.value = 820;
+        filter.Q.value = 0.7;
+        env.gain.setValueAtTime(0.0001, now);
+        for (let i = 0; i < 3; i += 1) {
+          const start = now + i * 0.12;
+          env.gain.setValueAtTime(0.0001, start);
+          env.gain.linearRampToValueAtTime(0.48, start + 0.012);
+          env.gain.exponentialRampToValueAtTime(0.0001, start + 0.1);
+        }
+        src.connect(filter);
+        filter.connect(env);
+        env.connect(master);
+        src.start(now);
+        src.stop(now + 0.5);
+      }
+    } catch (_) {
+      return;
+    }
+    await new Promise(function (resolve) { setTimeout(resolve, duration * 1000 + 60); });
+  }
+
   function scheduleAdvance(run) {
     const length = state.queue.length;
     const isLast = state.current + 1 >= length;
-    state.inGap = true;
-    clearTimeout(state.gapTimer);
-    state.gapTimer = setTimeout(function () {
-      state.gapTimer = null;
-      state.inGap = false;
+    const effect = takeSfxType(isLast);
+    const proceed = function () {
       if (run !== state.runId || !state.playing || state.paused) return;
-      if (isLast) {
-        if (state.settings.loop) startNewRound();
-        else finishRound();
-      } else {
-        startAt(state.current + 1);
-      }
-    }, Math.max(0, state.settings.gap * 1000));
+      state.inGap = true;
+      clearTimeout(state.gapTimer);
+      state.gapTimer = setTimeout(function () {
+        state.gapTimer = null;
+        state.inGap = false;
+        if (run !== state.runId || !state.playing || state.paused) return;
+        if (isLast) {
+          if (state.settings.loop) startNewRound();
+          else finishRound();
+        } else {
+          startAt(state.current + 1);
+        }
+      }, Math.max(0, state.settings.gap * 1000));
+    };
+    if (effect) {
+      state.inGap = true;
+      void playSynthSfx(effect).finally(proceed);
+    } else {
+      proceed();
+    }
   }
 
   function startNewRound() {
     if (!state.queue.length) return;
+    resetSfxCounter();
     const previousLast = state.queue[state.queue.length - 1].text;
     const nextRound = state.round + 1;
     const shouldPlay = state.playing || state.paused;
@@ -4136,6 +4344,60 @@
       els.singleIntroText.addEventListener('input', function () {
         state.settings.singleIntroText = els.singleIntroText.value;
         persist();
+      });
+    }
+    if (els.sfxToggle) {
+      els.sfxToggle.addEventListener('change', function () {
+        state.settings.sfxEnabled = els.sfxToggle.checked;
+        resetSfxCounter();
+        updateSfxUI();
+        persist();
+      });
+    }
+    if (els.sfxMode) {
+      els.sfxMode.addEventListener('change', function () {
+        state.settings.sfxMode = els.sfxMode.value === 'random' ? 'random' : 'fixed';
+        resetSfxCounter();
+        updateSfxUI();
+        persist();
+      });
+    }
+    if (els.sfxEvery) {
+      els.sfxEvery.addEventListener('change', function () {
+        state.settings.sfxEvery = clamp(Number(els.sfxEvery.value) || 5, 2, 30);
+        els.sfxEvery.value = String(state.settings.sfxEvery);
+        resetSfxCounter();
+        updateSfxUI();
+        persist();
+      });
+    }
+    document.querySelectorAll('[data-sfx-type]').forEach(function (input) {
+      input.addEventListener('change', function () {
+        const enabled = [...document.querySelectorAll('[data-sfx-type]')]
+          .filter(function (node) { return node.checked; })
+          .map(function (node) { return node.getAttribute('data-sfx-type'); });
+        if (!enabled.length) {
+          input.checked = true;
+          toast('至少保留一种生活音效。', 'error', 2600);
+          return;
+        }
+        state.settings.sfxTypes = enabled;
+        resetSfxCounter();
+        persist();
+      });
+    });
+    if (els.sfxVolume) {
+      els.sfxVolume.addEventListener('input', function () {
+        state.settings.sfxVolume = clamp(Number(els.sfxVolume.value) || 0, 0, 100);
+        if (els.sfxVolumeVal) els.sfxVolumeVal.textContent = Math.round(state.settings.sfxVolume) + '%';
+        persist();
+      });
+    }
+    if (els.sfxTestBtn) {
+      els.sfxTestBtn.addEventListener('click', function () {
+        const types = state.settings.sfxTypes.length ? state.settings.sfxTypes : ['cough'];
+        const type = types[Math.floor(Math.random() * types.length)];
+        void playSynthSfx(type);
       });
     }
     document.querySelectorAll('input[name="multiOrder"]').forEach(function (radio) {

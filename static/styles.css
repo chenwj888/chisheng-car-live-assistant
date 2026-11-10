@@ -1376,21 +1376,29 @@ kbd {
 .queue-list {
   display: flex;
   flex-direction: column;
-  max-height: 410px;
-  overflow-y: auto;
+  max-height: min(52vh, 500px);
+  overflow-y: scroll;
+  scrollbar-gutter: stable;
   margin: 0 -7px;
   padding: 0 7px;
   scrollbar-width: thin;
-  scrollbar-color: rgba(255, 255, 255, 0.14) transparent;
+  scrollbar-color: rgba(255, 122, 69, 0.55) rgba(255, 255, 255, 0.06);
 }
 
 .queue-list::-webkit-scrollbar {
-  width: 6px;
+  width: 9px;
+}
+
+.queue-list::-webkit-scrollbar-track {
+  border-radius: 99px;
+  background: rgba(255, 255, 255, 0.06);
 }
 
 .queue-list::-webkit-scrollbar-thumb {
+  border: 2px solid transparent;
   border-radius: 99px;
-  background: rgba(255, 255, 255, 0.13);
+  background: rgba(255, 122, 69, 0.62);
+  background-clip: padding-box;
 }
 
 .queue-item {
@@ -3180,4 +3188,51 @@ mark.changed {
   font-weight: 650;
   line-height: 1.5;
   word-break: break-word;
+}
+
+
+.sfx-body { margin-top: 8px; }
+.sfx-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 7px;
+}
+.sfx-types {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 7px 9px;
+  margin: 7px 0;
+}
+.sfx-types .sfx-label {
+  width: 100%;
+  color: var(--dim);
+  font-size: 8px;
+}
+.sfx-types label {
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  color: var(--muted-strong);
+  font-size: 8.5px;
+  cursor: pointer;
+}
+.sfx-types input { accent-color: #ff7b4f; }
+.sfx-volume { margin: 5px 0; }
+.sfx-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin: 7px 0;
+}
+.sfx-actions #sfxState {
+  margin-left: auto;
+  color: var(--dim);
+  font-size: 8px;
+}
+.sfx-body > small {
+  display: block;
+  color: var(--dim);
+  font-size: 7.6px;
+  line-height: 1.5;
 }

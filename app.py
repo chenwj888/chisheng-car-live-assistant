@@ -51,7 +51,7 @@ STATE_FILE = DATA_DIR / "state.json"
 CHAT_FILE = DATA_DIR / "chat.json"
 BLOCKLIST_FILE = DATA_DIR / "blocklist.json"
 BLOCKLIST_BACKUP_FILE = DATA_DIR / "blocklist.backup.json"
-APP_VERSION = "2.15.1"
+APP_VERSION = "2.16.0"
 
 for folder in (CACHE_DIR, LOG_DIR, DATA_DIR, MUSIC_DIR):
     folder.mkdir(parents=True, exist_ok=True)

@@ -838,3 +838,9 @@ body.light .queue-context {
 }
 body.light .queue-context-item span { color: #8e99a2; }
 body.light .queue-context-item b { color: #26343d; }
+
+
+body.light .sfx-types .sfx-label,
+body.light .sfx-actions #sfxState,
+body.light .sfx-body > small { color: #8e99a2; }
+body.light .sfx-types label { color: #5f6b74; }
