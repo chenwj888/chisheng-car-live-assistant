@@ -179,7 +179,7 @@
       'modelGroups', 'modelCurrent', 'modelHint', 'activeModelBadge', 'splitModelsBtn', 'useCommonBtn',
       'modeSelect', 'modeHint', 'gapSelect', 'rewriteToggle', 'loopToggle', 'jitterToggle',
       'strengthRange', 'strengthVal', 'strengthField', 'protectedInput',
-      'buildPlaylistBtn', 'playPlaylistBtn', 'playPlaylistLabel', 'buildPlayBtn', 'buildBtn', 'queueCount', 'queueList', 'queueEmpty', 'staleBadge',
+      'buildPlaylistBtn', 'playPlaylistBtn', 'playPlaylistLabel', 'queueSelectedModels', 'queueCurrentModel', 'queueNextModel', 'buildPlayBtn', 'buildBtn', 'queueCount', 'queueList', 'queueEmpty', 'staleBadge',
       'queueModel', 'downloadBtn', 'queueShuffleBtn', 'queueShuffleBtn2',
       'nowText', 'queuePos', 'progressBar', 'elapsed', 'remaining', 'playBtn', 'playUse',
       'prevBtn', 'nextBtn', 'stopBtn', 'testBtn', 'testLabel', 'playerCard', 'wave', 'playerModel', 'priorityBadge',
@@ -868,6 +868,7 @@
       els.multiBuildBtn.disabled = !state.multiSelected.some(function (id) { return scriptText(id).trim(); });
     }
     updatePlaylistActions();
+    updateQueueContext();
   }
 
   function hasAnyScript() {
@@ -1135,7 +1136,6 @@
 
     els.activeModelBadge.textContent = name;
     els.modelCurrent.textContent = name + (count ? ' · ' + count + ' 字' : ' · 未录入');
-    els.queueModel.textContent = state.multi && state.queue.length ? '多车型' : name;
     els.playerModel.textContent = state.queue[state.current] && state.queue[state.current].modelName
       ? state.queue[state.current].modelName
       : name;
@@ -1505,10 +1505,10 @@
       : '0 / ' + state.queue.length;
 
     els.playerModel.textContent = displayModel;
-    els.queueModel.textContent = state.multi ? '多车型' : displayModel;
     document.title = (active ? '▶ ' : '') + displayModel + ' · 驰声汽车口播';
     updateProgress();
     updatePlaylistActions();
+    updateQueueContext();
   }
 
   function renderAll() {
@@ -2620,6 +2620,44 @@
       return;
     }
     startAt(0);
+  }
+
+  function selectedPlaybackModels() {
+    return state.multiSelected.filter(function (id) {
+      return id !== 'common' && isKnownModelId(id) && scriptText(id).trim();
+    });
+  }
+
+  function nextModelName(fromIndex) {
+    const queue = state.queue || [];
+    for (let i = Math.max(0, fromIndex) + 1; i < queue.length; i += 1) {
+      if (queue[i].kind === 'model' && queue[i].modelName) return queue[i].modelName;
+    }
+    if (state.settings.loop) {
+      for (let i = 0; i <= Math.min(fromIndex, queue.length - 1); i += 1) {
+        if (queue[i].kind === 'model' && queue[i].modelName) return queue[i].modelName;
+      }
+    }
+    return '本轮结束';
+  }
+
+  function updateQueueContext() {
+    if (!els.queueSelectedModels && !els.queueCurrentModel && !els.queueNextModel) return;
+    const selected = selectedPlaybackModels().map(modelName);
+    if (els.queueSelectedModels) {
+      els.queueSelectedModels.textContent = selected.length ? selected.join(' / ') : '未选择';
+    }
+    if (!state.queue.length) {
+      if (els.queueCurrentModel) els.queueCurrentModel.textContent = '待生成';
+      if (els.queueNextModel) els.queueNextModel.textContent = '待生成';
+      return;
+    }
+    const index = state.current >= 0 ? state.current : 0;
+    const current = state.queue[index];
+    let currentName = current && current.modelName ? current.modelName : '待播放';
+    if (current && current.kind === 'intro') currentName = currentName + ' 开场';
+    if (els.queueCurrentModel) els.queueCurrentModel.textContent = currentName;
+    if (els.queueNextModel) els.queueNextModel.textContent = nextModelName(index);
   }
 
   function updatePlaylistActions() {

@@ -383,7 +383,7 @@
                 <span class="section-no">03</span>
                 <div>
                   <span class="kicker">PLAYLIST</span>
-                  <h2>播放清单 <em id="queueCount">0</em> <span class="queue-model" id="queueModel">通用</span></h2>
+                  <h2>播放清单 <em id="queueCount">0</em></h2>
                 </div>
               </div>
               <div class="btn-row">
@@ -396,6 +396,21 @@
                   <svg><use href="#icon-shuffle"></use></svg>
                   换一轮
                 </button>
+              </div>
+            </div>
+
+            <div class="queue-context" id="queueContext">
+              <div class="queue-context-item queue-context-selected">
+                <span>已选车型</span>
+                <b id="queueSelectedModels">未选择</b>
+              </div>
+              <div class="queue-context-item">
+                <span>正在讲</span>
+                <b id="queueCurrentModel">待生成</b>
+              </div>
+              <div class="queue-context-item">
+                <span>下一个</span>
+                <b id="queueNextModel">待生成</b>
               </div>
             </div>
 

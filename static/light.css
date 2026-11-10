@@ -830,3 +830,11 @@ body.light .studio-note {
   color: #8e99a2;
 }
 body.light .studio-note b { color: #26343d; }
+
+
+body.light .queue-context {
+  border-color: #eee5da;
+  background: #fbf8f3;
+}
+body.light .queue-context-item span { color: #8e99a2; }
+body.light .queue-context-item b { color: #26343d; }
