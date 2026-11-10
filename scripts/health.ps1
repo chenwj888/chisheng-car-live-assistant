@@ -15,7 +15,7 @@ if (Test-Path -LiteralPath $runtime) {
 
 try {
     $health = Invoke-RestMethod -Uri ("http://127.0.0.1:" + $port + "/api/health") -TimeoutSec 2
-    if ($health.ok -and $health.app -eq 'chisheng-car-live' -and $health.version -eq '2.13.1') { exit 0 }
+    if ($health.ok -and $health.app -eq 'chisheng-car-live' -and $health.version -eq '2.13.2') { exit 0 }
     exit 1
 } catch {
     exit 1

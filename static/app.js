@@ -39,6 +39,8 @@
     multiOrder: 'preset',
     generalIntro: '家人们，欢迎来到广汽上海锦仓店。我们1999年开业，地址在浦东高科西路1888号，广汽本田、广汽传祺都能看。新进来的家人先点点赞，左上角点个关注，转发给正在看车的朋友；有问题直接打在公屏上，我一条条回。到店可以试驾、算金融、做置换，具体优惠和现车以当天店内政策为准。',
     multiIntro: true,
+    singleIntro: true,
+    singleIntroText: '新进来的家人先点点赞，左上角点个关注，转发给正在看车的朋友；有问题直接打在公屏上，我一条条回。',
     multiModels: [],
     rate: 1,
     pitch: 0,
@@ -188,6 +190,7 @@
       'pitchVal', 'volumeRange', 'volumeVal', 'voiceTipText',
       'outputSelect', 'refreshOutputBtn', 'outputHint', 'packBtn', 'packState', 'autoKokoroToggle',
       'multiModels', 'multiAllBtn', 'multiClearBtn', 'multiBuildBtn', 'multiIntroToggle', 'multiPanel', 'multiGeneralText',
+      'singleIntroToggle', 'singleIntroText',
       'blockedWordsInput', 'blockedSaveBtn', 'blockedUploadBtn', 'blockedFileInput', 'blockedState', 'blockedBtnCount',
       'blockedExportWordsBtn', 'blockedExportReplacementsBtn', 'blockedImportReplacementsBtn', 'blockedReplacementsFileInput',
       'blockedFromInput', 'blockedToInput', 'blockedAddBtn', 'blockedReplacementList',
@@ -806,6 +809,10 @@
     return String(state.settings.generalIntro || DEFAULT_GENERAL_INTRO).trim();
   }
 
+  function singleIntroText() {
+    return String(state.settings.singleIntroText || '').trim();
+  }
+
   function initMultiSelection() {
     const valid = (state.settings.multiModels || []).filter(function (id) {
       return id !== 'common' && isKnownModelId(id);
@@ -913,6 +920,8 @@
     if (['edge', 'azure', 'volcengine', 'cosyvoice'].includes(next.engine)) next.autoKokoro = false;
     next.multiOrder = next.multiOrder === 'shuffle' ? 'shuffle' : 'preset';
     next.multiIntro = next.multiIntro !== false;
+    next.singleIntro = next.singleIntro !== false;
+    next.singleIntroText = String(next.singleIntroText || DEFAULT_SETTINGS.singleIntroText);
     next.multiModels = Array.isArray(next.multiModels) ? next.multiModels.filter(function (id) { return typeof id === 'string' && isKnownModelId(id) && id !== 'common'; }) : [];
     next.generalIntro = String(next.generalIntro || DEFAULT_GENERAL_INTRO);
     return next;
@@ -1024,6 +1033,8 @@
     if (els.autoKokoroToggle) els.autoKokoroToggle.checked = state.settings.autoKokoro;
     if (els.multiIntroToggle) els.multiIntroToggle.checked = state.settings.multiIntro;
     if (els.multiGeneralText) els.multiGeneralText.value = state.settings.generalIntro;
+    if (els.singleIntroToggle) els.singleIntroToggle.checked = state.settings.singleIntro;
+    if (els.singleIntroText) els.singleIntroText.value = state.settings.singleIntroText;
     document.querySelectorAll('input[name="multiOrder"]').forEach(function (radio) {
       radio.checked = radio.value === state.settings.multiOrder;
     });
@@ -1984,6 +1995,8 @@
     if (els.autoKokoroToggle) els.autoKokoroToggle.checked = state.settings.autoKokoro;
     if (els.multiIntroToggle) els.multiIntroToggle.checked = state.settings.multiIntro;
     if (els.multiGeneralText) els.multiGeneralText.value = state.settings.generalIntro;
+    if (els.singleIntroToggle) els.singleIntroToggle.checked = state.settings.singleIntro;
+    if (els.singleIntroText) els.singleIntroText.value = state.settings.singleIntroText;
     document.querySelectorAll('input[name="multiOrder"]').forEach(function (radio) {
       radio.checked = radio.value === state.settings.multiOrder;
     });
@@ -2475,7 +2488,28 @@
       toast('讲稿内容全部被禁用词过滤，请检查禁用词列表。', 'error', 4200);
       return false;
     }
+
+    if (state.settings.singleIntro) {
+      const interaction = sanitizeBlocked(singleIntroText());
+      if (interaction) {
+        state.queue.unshift({
+          id: 's0',
+          text: interaction,
+          original: interaction,
+          parts: [{ text: interaction, changed: false }],
+          changes: 0,
+          paragraphIndex: null,
+          sentenceIndex: 0,
+          locked: false,
+          modelId: null,
+          modelName: '互动',
+          kind: 'intro'
+        });
+      }
+    }
+
     state.queue.forEach(function (item) {
+      if (item.kind === 'intro') return;
       item.modelId = state.activeModel;
       item.modelName = modelName(state.activeModel);
       item.kind = 'model';
@@ -3957,6 +3991,18 @@
     if (els.multiGeneralText) {
       els.multiGeneralText.addEventListener('input', function () {
         state.settings.generalIntro = els.multiGeneralText.value;
+        persist();
+      });
+    }
+    if (els.singleIntroToggle) {
+      els.singleIntroToggle.addEventListener('change', function () {
+        state.settings.singleIntro = els.singleIntroToggle.checked;
+        persist();
+      });
+    }
+    if (els.singleIntroText) {
+      els.singleIntroText.addEventListener('input', function () {
+        state.settings.singleIntroText = els.singleIntroText.value;
         persist();
       });
     }

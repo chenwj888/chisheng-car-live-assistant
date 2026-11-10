@@ -3079,3 +3079,7 @@ mark.changed {
   font-size: 7.6px;
   line-height: 1.5;
 }
+
+
+.single-intro-toggle { margin-top: 8px; }
+.single-intro-field { margin-top: 6px; }
