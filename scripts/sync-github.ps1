@@ -1,4 +1,4 @@
-param(
+﻿param(
   [string]$Remote = "origin",
   [string]$Branch = "main"
 )
