@@ -28,6 +28,40 @@
 
 关闭软件：点击界面左下角 **“退出软件”**，或双击 **`停止软件.cmd`**。
 
+## 版本与 GitHub
+
+每个版本使用独立标签，例如 `v2.14.0`，GitHub 的 Tags / Releases 可以直接区分。
+
+当前仓库：
+
+```text
+https://github.com/chenwj888/chisheng-car-live-assistant
+```
+
+版本记录见 `CHANGELOG.md`。
+
+发布新版本时：
+
+1. 同时修改 `app.py` 的 `APP_VERSION` 和 `scripts/health.ps1`；
+2. 确认 `git status` 只包含源码改动；
+3. 运行：
+
+```powershell
+powershell -ExecutionPolicy Bypass -File scripts\sync-github.ps1
+```
+
+脚本会：
+
+- 提交源码；
+- 创建 `v版本号` 标签；
+- 推送 `main` 和标签到 GitHub。
+
+历史标签：
+
+```text
+v2.13.0  v2.13.1  v2.13.2  v2.13.3  v2.14.0
+```
+
 > 如果电脑上还开着旧版本，新版本会自动换到 `8766` 等空闲端口启动，避免打开旧界面；建议先关闭旧版窗口。车型讲稿保存在浏览器本地，升级不会清空。
 
 > 启动脚本的少量控制台提示使用英文，是为了避免 Windows 代码页导致乱码；软件界面和朗读内容全部为中文。

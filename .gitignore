@@ -16,3 +16,10 @@ zip-test/
 *.part
 .DS_Store
 Thumbs.db
+
+讲稿-*
+
+music/
+runtime.json
+vendor-*/
+github-upload/
