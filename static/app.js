@@ -199,7 +199,7 @@
       'musicFileInput', 'musicList',
       'serverPill', 'engineMiniState', 'engineMiniText', 'exitBtn', 'helpBtn', 'topHelpBtn', 'blockedBtn', 'blockedPanel',
       'topEyebrow', 'topTitle', 'topSubtitle', 'scriptView', 'chatView',
-      'navScript', 'navChat', 'navQueue',
+      'navScript', 'navScriptStudio', 'navChat', 'navQueue', 'scriptStudioView', 'openScriptStudioBtn',
       'toast', 'helpDialog', 'closeHelpBtn', 'helpDoneBtn'
     ].forEach(function (id) { els[id] = $(id); });
   }
@@ -3883,7 +3883,12 @@
     script: {
       eyebrow: 'LIVE SCRIPT CONSOLE / 2026',
       title: '直播口播台',
-      subtitle: '一份文档管理多车型讲稿，随机编排、近义改写、连续口播。'
+      subtitle: '选车型、选策略、生成清单、播放；讲稿在独立的脚本工作台里整理。'
+    },
+    scriptStudio: {
+      eyebrow: 'SCRIPT STUDIO / 2026',
+      title: '脚本工作台',
+      subtitle: '整理各车型讲稿；离开这个页面时内容会留在后台，不会丢失。'
     },
     chat: {
       eyebrow: 'LIVE CHAT ASSIST / DOUYIN',
@@ -3895,18 +3900,21 @@
   function switchView(view, options) {
     const opts = options || {};
     const isChat = view === 'chat';
-    if (els.scriptView) els.scriptView.hidden = isChat;
+    const isStudio = view === 'scriptStudio';
+    const isScript = !isChat && !isStudio;
+    if (els.scriptView) els.scriptView.hidden = !isScript;
+    if (els.scriptStudioView) els.scriptStudioView.hidden = !isStudio;
     if (els.chatView) els.chatView.hidden = !isChat;
     document.body.classList.toggle('chat-view-mode', isChat);
 
-    [els.navScript, els.navChat, els.navQueue].forEach(function (button) {
+    [els.navScript, els.navScriptStudio, els.navChat, els.navQueue].forEach(function (button) {
       if (!button) return;
       button.classList.remove('active');
     });
-    const activeNav = isChat ? els.navChat : els.navScript;
+    const activeNav = isChat ? els.navChat : (isStudio ? els.navScriptStudio : els.navScript);
     if (activeNav) activeNav.classList.add('active');
 
-    const copy = VIEW_COPY[isChat ? 'chat' : 'script'];
+    const copy = VIEW_COPY[isChat ? 'chat' : (isStudio ? 'scriptStudio' : 'script')];
     if (els.topEyebrow) els.topEyebrow.textContent = copy.eyebrow;
     if (els.topTitle) els.topTitle.textContent = copy.title;
     if (els.topSubtitle) els.topSubtitle.textContent = copy.subtitle;
@@ -3923,6 +3931,7 @@
     }
 
     if (opts.scrollTarget) {
+      const page = isStudio ? els.scriptStudioView : (isChat ? els.chatView : els.scriptView);
       setTimeout(function () {
         const target = document.getElementById(opts.scrollTarget);
         if (target) target.scrollIntoView({ behavior: 'smooth', block: 'start' });
@@ -4432,6 +4441,12 @@
 
     if (els.navScript) {
       els.navScript.addEventListener('click', function () { switchView('script'); });
+    }
+    if (els.navScriptStudio) {
+      els.navScriptStudio.addEventListener('click', function () { switchView('scriptStudio'); });
+    }
+    if (els.openScriptStudioBtn) {
+      els.openScriptStudioBtn.addEventListener('click', function () { switchView('scriptStudio'); });
     }
     if (els.navChat) {
       els.navChat.addEventListener('click', function () { switchView('chat'); });

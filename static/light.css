@@ -822,3 +822,11 @@ body.light .flow-hint {
   background: #fbf8f3;
   color: #5f6b74;
 }
+
+
+body.light .studio-note {
+  border-color: #eee5da;
+  background: #fbf8f3;
+  color: #8e99a2;
+}
+body.light .studio-note b { color: #26343d; }

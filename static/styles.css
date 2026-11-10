@@ -3113,3 +3113,38 @@ mark.changed {
   font-size: 8px;
   line-height: 1.45;
 }
+
+
+.script-studio-layout {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  width: 100%;
+  max-width: 1050px;
+  margin: 0 auto;
+}
+.studio-note {
+  display: flex;
+  align-items: baseline;
+  gap: 9px;
+  padding: 8px 11px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: var(--surface-2);
+  color: var(--dim);
+  font-size: 8.5px;
+  line-height: 1.5;
+}
+.studio-note b {
+  color: var(--ink);
+  font-size: 9.5px;
+  white-space: nowrap;
+}
+.script-studio-layout .script-card { width: 100%; }
+
+
+.flow-script-link {
+  margin-left: auto;
+  flex: none;
+  font-size: 8px;
+}

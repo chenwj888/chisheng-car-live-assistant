@@ -61,20 +61,25 @@
           <span>口播工作台</span>
           <i>01</i>
         </button>
+        <button class="nav-item" id="navScriptStudio" type="button" data-view="scriptStudio">
+          <svg><use href="#icon-doc"></use></svg>
+          <span>脚本工作台</span>
+          <i>02</i>
+        </button>
         <button class="nav-item" id="navChat" type="button" data-view="chat">
           <svg><use href="#icon-chat"></use></svg>
           <span>直播互动</span>
-          <i>02</i>
+          <i>03</i>
         </button>
         <button class="nav-item" id="navQueue" type="button" data-view="script" data-scroll-target="queueCard">
           <svg><use href="#icon-queue"></use></svg>
           <span>播放清单</span>
-          <i>03</i>
+          <i>04</i>
         </button>
         <button class="nav-item" id="helpBtn" type="button">
           <svg><use href="#icon-help"></use></svg>
           <span>使用说明</span>
-          <i>04</i>
+          <i>05</i>
         </button>
       </nav>
 
@@ -123,9 +128,12 @@
         </div>
       </header>
 
-      <div id="scriptView" class="view-panel">
-      <div class="layout">
-        <div class="col-main">
+      <section id="scriptStudioView" class="view-panel script-studio-view" hidden>
+        <div class="script-studio-layout">
+          <div class="studio-note">
+            <b>脚本工作台</b>
+            <span>在这里整理车型讲稿；切换回“口播工作台”不会丢失编辑内容。</span>
+          </div>
           <section class="card script-card" id="scriptCard">
             <div class="card-head">
               <div class="head-title">
@@ -184,6 +192,12 @@
             </div>
           </section>
 
+        </div>
+      </section>
+
+      <div id="scriptView" class="view-panel">
+      <div class="layout">
+        <div class="col-main">
           <section class="card strategy-card">
             <div class="card-head">
               <div class="head-title">
@@ -196,7 +210,7 @@
               <span class="soft-badge"><svg><use href="#icon-spark"></use></svg>每轮自动换一种说法</span>
             </div>
 
-            <div class="flow-hint">1 选播放车型 → 2 选编排策略 → 3 生成播放清单 → 4 播放</div>
+            <div class="flow-hint">1 选播放车型 → 2 选编排策略 → 3 生成播放清单 → 4 播放 <button class="text-btn flow-script-link" id="openScriptStudioBtn" type="button">编辑讲稿</button></div>
 
             <div class="multi-panel" id="multiPanel">
               <div class="multi-head">
