@@ -1,0 +1,7 @@
+.venv/
+models/
+generated_audio/
+__pycache__/
+*.pyc
+jieba.cache
+test_*.wav

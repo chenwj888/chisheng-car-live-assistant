@@ -1,0 +1,973 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#f6f4ef">
+  <title>驰声 · 汽车直播口播助手</title>
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='16' fill='%23fff7f1'/%3E%3Cpath d='M18 38V26M26 44V20M34 40V24M42 46V18M50 34V30' stroke='%23f26a3d' stroke-width='5' stroke-linecap='round'/%3E%3C/svg%3E">
+  <link rel="stylesheet" href="styles.css">
+  <link rel="stylesheet" href="light.css">
+  <link rel="stylesheet" href="chat.css">
+</head>
+<body class="light">
+  <svg class="svg-sprite" aria-hidden="true">
+    <symbol id="icon-play" viewBox="0 0 24 24"><path d="M8 5.5v13l10-6.5-10-6.5Z" fill="currentColor" stroke="none"/></symbol>
+    <symbol id="icon-pause" viewBox="0 0 24 24"><rect x="7" y="5" width="3.5" height="14" rx="1.2" fill="currentColor" stroke="none"/><rect x="13.5" y="5" width="3.5" height="14" rx="1.2" fill="currentColor" stroke="none"/></symbol>
+    <symbol id="icon-prev" viewBox="0 0 24 24"><path d="M6 5v14M18 6l-8 6 8 6V6Z"/></symbol>
+    <symbol id="icon-next" viewBox="0 0 24 24"><path d="M18 5v14M6 6l8 6-8 6V6Z"/></symbol>
+    <symbol id="icon-stop" viewBox="0 0 24 24"><rect x="6" y="6" width="12" height="12" rx="2" fill="currentColor" stroke="none"/></symbol>
+    <symbol id="icon-upload" viewBox="0 0 24 24"><path d="M12 16V4m0 0L7 9m5-5 5 5M5 16v3a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1v-3"/></symbol>
+    <symbol id="icon-download" viewBox="0 0 24 24"><path d="M12 4v12m0 0 5-5m-5 5-5-5M5 19h14"/></symbol>
+    <symbol id="icon-shuffle" viewBox="0 0 24 24"><path d="M4 7h3c4 0 6 10 10 10h3m0 0-3-3m3 3-3 3M4 17h3c1.4 0 2.6-1.2 3.7-2.7M14.3 9.7C15.4 8.2 16.6 7 18 7h2m0 0-3-3m3 3-3 3"/></symbol>
+    <symbol id="icon-trash" viewBox="0 0 24 24"><path d="M4 7h16M9 7V4h6v3m-9 0 1 13h10l1-13M10 11v5m4-5v5"/></symbol>
+    <symbol id="icon-help" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M9.5 9a2.6 2.6 0 1 1 3.8 2.3c-.8.4-1.3 1-1.3 1.9v.3M12 17.3v.2"/></symbol>
+    <symbol id="icon-exit" viewBox="0 0 24 24"><path d="M10 5H6a1 1 0 0 0-1 1v12a1 1 0 0 0 1 1h4M15 8l4 4-4 4m4-4H9"/></symbol>
+    <symbol id="icon-spark" viewBox="0 0 24 24"><path d="M12 3l1.8 5.2L19 10l-5.2 1.8L12 17l-1.8-5.2L5 10l5.2-1.8L12 3Z"/><path d="M18.5 15.5l.7 2 2 .7-2 .7-.7 2-.7-2-2-.7 2-.7.7-2Z"/></symbol>
+    <symbol id="icon-queue" viewBox="0 0 24 24"><path d="M4 6h12M4 12h12M4 18h8"/><circle cx="19" cy="17" r="2.5"/><path d="M21.5 17V9l-4 1"/></symbol>
+    <symbol id="icon-mic" viewBox="0 0 24 24"><rect x="9" y="3" width="6" height="11" rx="3"/><path d="M5 11a7 7 0 0 0 14 0M12 18v3m-3 0h6"/></symbol>
+    <symbol id="icon-close" viewBox="0 0 24 24"><path d="M6 6l12 12M18 6 6 18"/></symbol>
+    <symbol id="icon-check" viewBox="0 0 24 24"><path d="m5 12.5 4.5 4.5L19 7.5"/></symbol>
+    <symbol id="icon-warning" viewBox="0 0 24 24"><path d="M12 4 3.5 19h17L12 4Z"/><path d="M12 9v5m0 3v.2"/></symbol>
+    <symbol id="icon-doc" viewBox="0 0 24 24"><path d="M7 3h7l4 4v14H7V3Z"/><path d="M14 3v5h4M10 12h5m-5 4h5"/></symbol>
+    <symbol id="icon-settings" viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M19 12a7 7 0 0 0-.1-1.2l2-1.5-2-3.4-2.4 1a7 7 0 0 0-2-1.2L14.2 3h-4.4l-.3 2.7a7 7 0 0 0-2 1.2l-2.4-1-2 3.4 2 1.5A7 7 0 0 0 5 12c0 .4 0 .8.1 1.2l-2 1.5 2 3.4 2.4-1a7 7 0 0 0 2 1.2l.3 2.7h4.4l.3-2.7a7 7 0 0 0 2-1.2l2.4 1 2-3.4-2-1.5c.1-.4.1-.8.1-1.2Z"/></symbol>
+    <symbol id="icon-chat" viewBox="0 0 24 24"><path d="M4 5h16v10H9l-5 4V5Z"/><path d="M8 9h8m-8 3h5"/></symbol>
+    <symbol id="icon-music" viewBox="0 0 24 24"><path d="M9 18V6l10-2v11"/><circle cx="6.5" cy="18" r="2.5"/><circle cx="16.5" cy="15" r="2.5"/></symbol>
+    <symbol id="icon-bot" viewBox="0 0 24 24"><rect x="4" y="7" width="16" height="12" rx="3"/><path d="M12 3v4M8 12h.2M16 12h.2M9 16h6"/></symbol>
+    <symbol id="icon-send" viewBox="0 0 24 24"><path d="m4 11 16-7-6 16-3-7-7-2Z"/><path d="m11 13 4-4"/></symbol>
+    <symbol id="icon-plus" viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></symbol>
+    <symbol id="icon-refresh" viewBox="0 0 24 24"><path d="M20 11a8 8 0 1 0-2 6M20 5v6h-6"/></symbol>
+    <symbol id="icon-copy" viewBox="0 0 24 24"><rect x="8" y="8" width="11" height="12" rx="2"/><path d="M16 8V6a2 2 0 0 0-2-2H6a2 2 0 0 0-2 2v10a2 2 0 0 0 2 2h2"/></symbol>
+  </svg>
+
+  <div class="ambient ambient-one"></div>
+  <div class="ambient ambient-two"></div>
+
+  <div class="app">
+    <aside class="sidebar">
+      <div class="brand">
+        <div class="brand-mark" aria-hidden="true">
+          <span></span><span></span><span></span><span></span><span></span>
+        </div>
+        <div class="brand-text">
+          <strong>驰声</strong>
+          <small>CAR LIVE STUDIO</small>
+        </div>
+      </div>
+
+      <nav class="side-nav" aria-label="主导航">
+        <button class="nav-item active" id="navScript" type="button" data-view="script">
+          <svg><use href="#icon-doc"></use></svg>
+          <span>口播工作台</span>
+          <i>01</i>
+        </button>
+        <button class="nav-item" id="navChat" type="button" data-view="chat">
+          <svg><use href="#icon-chat"></use></svg>
+          <span>直播互动</span>
+          <i>02</i>
+        </button>
+        <button class="nav-item" id="navQueue" type="button" data-view="script" data-scroll-target="queueCard">
+          <svg><use href="#icon-queue"></use></svg>
+          <span>播放清单</span>
+          <i>03</i>
+        </button>
+        <button class="nav-item" id="helpBtn" type="button">
+          <svg><use href="#icon-help"></use></svg>
+          <span>使用说明</span>
+          <i>04</i>
+        </button>
+      </nav>
+
+      <div class="side-spacer"></div>
+
+      <div class="engine-mini" id="engineMini">
+        <div class="engine-mini-top">
+          <span class="signal-dot"></span>
+          <span>朗读引擎</span>
+          <b id="engineMiniState">本地语音</b>
+        </div>
+        <p id="engineMiniText">系统语音 · 无需联网</p>
+        <div class="engine-bars" aria-hidden="true">
+          <i></i><i></i><i></i><i></i><i></i><i></i><i></i>
+        </div>
+      </div>
+
+      <div class="compliance-mini">
+        <svg><use href="#icon-warning"></use></svg>
+        <p>合成语音仍可能被平台识别。请遵守直播规则，按要求标注 AI 合成内容；本工具不承诺规避平台审核。</p>
+      </div>
+
+      <button class="exit-btn" id="exitBtn" type="button">
+        <svg><use href="#icon-exit"></use></svg>
+        退出软件
+      </button>
+    </aside>
+
+    <main>
+      <header class="topbar">
+        <div class="title-block">
+          <span class="eyebrow" id="topEyebrow">LIVE SCRIPT CONSOLE / 2026</span>
+          <h1 id="topTitle">直播口播台</h1>
+          <p id="topSubtitle">一份文档管理多车型讲稿，随机编排、近义改写、连续口播。</p>
+        </div>
+        <div class="top-actions">
+          <span class="status-pill" id="serverPill"><i></i><span>本机运行</span></span>
+          <button class="btn ghost compact" id="blockedBtn" type="button" title="打开全局禁用词">
+            <svg><use href="#icon-warning"></use></svg>
+            禁用词 <span class="blocked-count" id="blockedBtnCount" hidden></span>
+          </button>
+          <button class="btn ghost compact" id="topHelpBtn" type="button">
+            <svg><use href="#icon-help"></use></svg>
+            使用说明
+          </button>
+        </div>
+      </header>
+
+      <div id="scriptView" class="view-panel">
+      <div class="layout">
+        <div class="col-main">
+          <section class="card script-card" id="scriptCard">
+            <div class="card-head">
+              <div class="head-title">
+                <span class="section-no">01</span>
+                <div>
+                  <span class="kicker">SCRIPT</span>
+                  <h2>直播讲稿 <span class="active-model-badge" id="activeModelBadge">通用</span></h2>
+                </div>
+              </div>
+              <div class="btn-row">
+                <button class="btn small" id="importBtn" type="button">
+                  <svg><use href="#icon-upload"></use></svg>
+                  导入文档
+                </button>
+                <input type="file" id="fileInput" accept=".txt,.md,.markdown,.docx" hidden>
+                <button class="btn small ghost" id="sampleBtn" type="button">载入示例</button>
+                <button class="icon-btn" id="clearBtn" type="button" title="清空当前车型讲稿" aria-label="清空当前车型讲稿">
+                  <svg><use href="#icon-trash"></use></svg>
+                </button>
+              </div>
+            </div>
+
+            <div class="model-picker" id="modelPicker">
+              <div class="model-picker-head">
+                <span class="model-picker-label">车型讲稿</span>
+                <span class="model-current" id="modelCurrent">通用</span>
+                <button class="text-btn model-split-btn" id="splitModelsBtn" type="button" disabled>
+                  <svg><use href="#icon-spark"></use></svg>
+                  识别车型并拆分
+                </button>
+              </div>
+              <div class="model-groups" id="modelGroups"></div>
+              <div class="model-hint">
+                <span id="modelHint">支持【雅阁】、雅阁：、## 雅阁 等车型标题</span>
+                <button class="text-btn" id="useCommonBtn" type="button" hidden>使用通用稿</button>
+              </div>
+            </div>
+
+            <div class="editor-wrap" id="editorWrap">
+              <textarea id="scriptInput" spellcheck="false" aria-label="直播讲稿"
+                placeholder="把直播讲稿粘贴到这里。&#10;&#10;建议用空行分段。支持 .txt / .md / .docx 导入，也可以直接把文件拖进来。"></textarea>
+              <div class="drop-overlay" id="dropOverlay">
+                <svg><use href="#icon-upload"></use></svg>
+                <strong>松手导入讲稿</strong>
+                <span>支持 TXT / Markdown / Word</span>
+              </div>
+            </div>
+
+            <div class="stats-row">
+              <span><b id="charCount">0</b> 字</span>
+              <span><b id="paraCount">0</b> 段</span>
+              <span><b id="sentCount">0</b> 句</span>
+              <span class="stat-duration"><b id="durationStat">0:00</b> 预计时长</span>
+              <span class="autosave" id="saveState"><i></i><span id="saveText">已自动保存</span></span>
+            </div>
+          </section>
+
+          <section class="card strategy-card">
+            <div class="card-head">
+              <div class="head-title">
+                <span class="section-no">02</span>
+                <div>
+                  <span class="kicker">ARRANGEMENT</span>
+                  <h2>编排策略</h2>
+                </div>
+              </div>
+              <span class="soft-badge"><svg><use href="#icon-spark"></use></svg>每轮自动换一种说法</span>
+            </div>
+
+            <div class="strategy-grid">
+              <label class="field">
+                <span>朗读顺序</span>
+                <select id="modeSelect"></select>
+                <small id="modeHint">段落随机，段内保留首句后随机。</small>
+                <small class="mode-lock-hint">含“第一、第二、第三”的段落自动整段保留，内部不拆不乱序，只替换形容词。</small>
+              </label>
+
+              <label class="field">
+                <span>句间停顿</span>
+                <select id="gapSelect">
+                  <option value="0">不留停顿</option>
+                  <option value="0.4">0.4 秒 · 紧凑</option>
+                  <option value="0.8" selected>0.8 秒 · 自然</option>
+                  <option value="1.3">1.3 秒 · 舒缓</option>
+                  <option value="2">2.0 秒 · 留白</option>
+                </select>
+                <small>每句读完后留出的呼吸时间。</small>
+              </label>
+
+              <div class="toggle-card">
+                <div class="toggle-copy">
+                  <b>形容词近义改写</b>
+                  <small>把“大气 / 宽敞 / 精致”等词换成同义表达。</small>
+                </div>
+                <label class="switch">
+                  <input type="checkbox" id="rewriteToggle" checked>
+                  <span></span>
+                </label>
+              </div>
+
+              <div class="toggle-card">
+                <div class="toggle-copy">
+                  <b>循环轮播</b>
+                  <small>读完后自动重新洗牌，开启下一轮。</small>
+                </div>
+                <label class="switch">
+                  <input type="checkbox" id="loopToggle" checked>
+                  <span></span>
+                </label>
+              </div>
+
+              <div class="strength-field" id="strengthField">
+                <div class="strength-head">
+                  <span>改写强度</span>
+                  <b id="strengthVal">55%</b>
+                </div>
+                <input type="range" id="strengthRange" min="0" max="100" step="5" value="55" aria-label="改写强度">
+                <div class="range-scale"><span>保守</span><span>积极</span></div>
+              </div>
+
+              <div class="toggle-card">
+                <div class="toggle-copy">
+                  <b>语气微变化</b>
+                  <small>每句语速轻微浮动，减少机械感。</small>
+                </div>
+                <label class="switch">
+                  <input type="checkbox" id="jitterToggle" checked>
+                  <span></span>
+                </label>
+              </div>
+            </div>
+
+            <details class="advanced">
+              <summary>高级：保护词与固定说法</summary>
+              <div class="advanced-body">
+                <label class="field">
+                  <span>保护词（用逗号分隔，不会被改写）</span>
+                  <input type="text" id="protectedInput" placeholder="例如：智驾, 四驱, 增程, 首付, 落地价">
+                </label>
+                <p>车名、品牌名、配置名、价格与电话号码会自动跳过；这里可以补充你不想被替换的词。</p>
+              </div>
+            </details>
+
+            <details class="advanced" id="blockedPanel">
+              <summary>直播禁用词与高危替换（全场景生效）</summary>
+              <div class="advanced-body">
+                <div class="blocked-section">
+                  <div class="blocked-section-head">
+                    <div>
+                      <b>绝对禁用</b>
+                      <small>匹配后直接删除，不朗读；每行一个，也支持逗号 / 顿号分隔。</small>
+                    </div>
+                    <button class="text-btn blocked-head-btn" id="blockedExportWordsBtn" type="button">导出禁用词</button>
+                  </div>
+                  <textarea id="blockedWordsInput" rows="3" placeholder="例如：最低价&#10;百分百&#10;私下交易"></textarea>
+                </div>
+
+                <div class="blocked-section">
+                  <div class="blocked-section-head">
+                    <div>
+                      <b>高危替换</b>
+                      <small>高危词保留语义，用替换词读出来。例如“绝对”→“非常”。</small>
+                    </div>
+                    <div class="blocked-head-actions">
+                      <button class="text-btn blocked-head-btn" id="blockedExportReplacementsBtn" type="button">导出表格</button>
+                      <button class="text-btn blocked-head-btn" id="blockedImportReplacementsBtn" type="button">导入表格</button>
+                      <input type="file" id="blockedReplacementsFileInput" accept=".csv,.txt,.md,text/csv,text/plain" hidden>
+                    </div>
+                  </div>
+                  <div class="blocked-replacement-add">
+                    <input type="text" id="blockedFromInput" placeholder="高危词，如：绝对">
+                    <span>→</span>
+                    <input type="text" id="blockedToInput" placeholder="替换为，如：非常">
+                    <button class="btn small" id="blockedAddBtn" type="button">添加</button>
+                  </div>
+                  <div class="blocked-replacement-list" id="blockedReplacementList"></div>
+                </div>
+
+                <div class="blocked-actions">
+                  <button class="btn small" id="blockedSaveBtn" type="button">保存全部</button>
+                  <button class="text-btn" id="blockedUploadBtn" type="button">上传 TXT / CSV</button>
+                  <input type="file" id="blockedFileInput" accept=".txt,.csv,.md,text/plain" hidden>
+                  <span id="blockedState" title="修改后自动保存到 data/blocklist.json">绝对 0 · 替换 0 · 自动保存</span>
+                </div>
+                <p class="blocked-help">上传格式：绝对词一行一个；替换规则写成 <b>高危词=替换词</b> 或 <b>高危词→替换词</b>。修改后自动保存；同时写入浏览器缓存和软件目录。绝对禁用、公屏回复、访客姓名、私信和所有语音引擎共用这份规则。</p>
+              </div>
+            </details>
+
+            <div class="strategy-actions">
+              <button class="btn primary" id="buildPlayBtn" type="button">
+                <svg><use href="#icon-play"></use></svg>
+                生成并开始朗读
+              </button>
+              <button class="btn ghost" id="buildBtn" type="button">
+                <svg><use href="#icon-shuffle"></use></svg>
+                只生成清单
+              </button>
+              <span class="action-note">快捷键 <kbd>Ctrl</kbd> + <kbd>Enter</kbd></span>
+            </div>
+          </section>
+
+          <section class="card queue-card" id="queueCard">
+            <div class="card-head">
+              <div class="head-title">
+                <span class="section-no">03</span>
+                <div>
+                  <span class="kicker">PLAYLIST</span>
+                  <h2>播放清单 <em id="queueCount">0</em> <span class="queue-model" id="queueModel">通用</span></h2>
+                </div>
+              </div>
+              <div class="btn-row">
+                <span class="stale-badge" id="staleBadge" hidden>讲稿已修改</span>
+                <button class="btn small ghost" id="downloadBtn" type="button" disabled>
+                  <svg><use href="#icon-download"></use></svg>
+                  导出
+                </button>
+                <button class="btn small ghost" id="queueShuffleBtn" type="button" disabled>
+                  <svg><use href="#icon-shuffle"></use></svg>
+                  换一轮
+                </button>
+              </div>
+            </div>
+
+            <div class="multi-panel" id="multiPanel">
+              <div class="multi-head">
+                <div>
+                  <b>多车型播放</b>
+                  <small>勾选车型，按预设顺序或随机串成一份清单；各车型讲稿分开生成，不串稿。</small>
+                </div>
+                <div class="multi-head-actions">
+                  <button class="text-btn" id="multiAllBtn" type="button">全选有稿</button>
+                  <button class="text-btn" id="multiClearBtn" type="button">清空</button>
+                </div>
+              </div>
+              <div class="multi-models" id="multiModels"></div>
+              <div class="multi-options">
+                <label class="multi-radio"><input type="radio" name="multiOrder" value="preset" checked> 预设顺序</label>
+                <label class="multi-radio"><input type="radio" name="multiOrder" value="shuffle"> 随机车型</label>
+                <label class="inline-check"><input type="checkbox" id="multiIntroToggle" checked> 切换时插入通用讲稿</label>
+                <button class="btn small" id="multiBuildBtn" type="button">
+                  <svg><use href="#icon-queue"></use></svg>
+                  生成多车型清单
+                </button>
+              </div>
+              <label class="multi-general">
+                <span>通用插入语（门店优势 / 优惠政策）</span>
+                <textarea id="multiGeneralText" rows="2"></textarea>
+              </label>
+              <p class="multi-tip">每款车仍按自己的讲稿单独生成，不会串稿；勾选“切换时插入通用讲稿”后，上面的通用插入语会出现在每款车之前。</p>
+            </div>
+
+            <div class="queue-list" id="queueList" role="list"></div>
+            <div class="queue-empty" id="queueEmpty">
+              <div class="empty-glyph"><svg><use href="#icon-queue"></use></svg></div>
+              <strong>清单还没有生成</strong>
+              <p>导入讲稿后，点击“生成并开始朗读”。句子会在这里按本轮顺序排列。</p>
+            </div>
+          </section>
+        </div>
+
+        <aside class="col-side">
+          <section class="card player-card" id="playerCard">
+            <div class="now-head">
+              <span class="live-label"><i></i> NOW READING</span>
+              <span class="priority-badge" id="priorityBadge" hidden>公屏回复中</span>
+              <span class="player-model" id="playerModel">通用</span>
+              <span id="queuePos">0 / 0</span>
+            </div>
+
+            <div class="wave" id="wave" aria-hidden="true">
+              <i style="--h:18%;--d:.0s"></i><i style="--h:42%;--d:.12s"></i><i style="--h:66%;--d:.24s"></i>
+              <i style="--h:34%;--d:.06s"></i><i style="--h:82%;--d:.18s"></i><i style="--h:54%;--d:.3s"></i>
+              <i style="--h:94%;--d:.1s"></i><i style="--h:46%;--d:.22s"></i><i style="--h:72%;--d:.34s"></i>
+              <i style="--h:28%;--d:.04s"></i><i style="--h:58%;--d:.16s"></i><i style="--h:88%;--d:.28s"></i>
+              <i style="--h:38%;--d:.08s"></i><i style="--h:64%;--d:.2s"></i><i style="--h:50%;--d:.32s"></i>
+              <i style="--h:76%;--d:.14s"></i><i style="--h:32%;--d:.26s"></i><i style="--h:60%;--d:.38s"></i>
+              <i style="--h:90%;--d:.02s"></i><i style="--h:44%;--d:.15s"></i><i style="--h:70%;--d:.27s"></i>
+              <i style="--h:24%;--d:.09s"></i><i style="--h:56%;--d:.21s"></i><i style="--h:80%;--d:.33s"></i>
+              <i style="--h:36%;--d:.05s"></i><i style="--h:62%;--d:.17s"></i><i style="--h:48%;--d:.29s"></i>
+              <i style="--h:74%;--d:.11s"></i>
+            </div>
+
+            <div class="now-text" id="nowText" aria-live="polite">
+              <span class="now-placeholder">点击“生成并开始朗读”<br>当前句子会显示在这里</span>
+            </div>
+
+            <div class="progress-track"><div class="progress-fill" id="progressBar"></div></div>
+            <div class="time-row"><span id="elapsed">0:00</span><span id="remaining">--:--</span></div>
+
+            <div class="transport">
+              <button class="transport-btn" id="prevBtn" type="button" title="上一句 (←)" aria-label="上一句">
+                <svg><use href="#icon-prev"></use></svg>
+              </button>
+              <button class="play-btn" id="playBtn" type="button" title="播放 / 暂停当前车型 (空格)" aria-label="播放">
+                <svg><use id="playUse" href="#icon-play"></use></svg>
+              </button>
+              <button class="transport-btn" id="nextBtn" type="button" title="下一句 (→)" aria-label="下一句">
+                <svg><use href="#icon-next"></use></svg>
+              </button>
+              <button class="transport-btn stop" id="stopBtn" type="button" title="停止 (Esc)" aria-label="停止">
+                <svg><use href="#icon-stop"></use></svg>
+              </button>
+            </div>
+
+            <div class="play-caption">播放键会按当前车型自动生成并朗读清单</div>
+
+            <div class="player-actions">
+              <button class="text-btn" id="queueShuffleBtn2" type="button">
+                <svg><use href="#icon-shuffle"></use></svg>
+                重新洗牌
+              </button>
+              <button class="text-btn" id="testBtn" type="button">
+                <svg><use href="#icon-mic"></use></svg>
+                <span id="testLabel">试听音色</span>
+              </button>
+            </div>
+
+            <div class="shortcut-hint">
+              <span><kbd>空格</kbd> 播放/暂停</span><span><kbd>←</kbd><kbd>→</kbd> 切换</span><span><kbd>Esc</kbd> 停止</span>
+            </div>
+          </section>
+
+          <section class="card voice-card">
+            <div class="card-head compact">
+              <div class="head-title">
+                <span class="section-no">04</span>
+                <div>
+                  <span class="kicker">VOICE</span>
+                  <h2>声音设置</h2>
+                </div>
+              </div>
+            </div>
+
+            <label class="field">
+              <span>朗读引擎</span>
+              <select id="engineSelect">
+                <option value="local">本地语音 · 免安装</option>
+                <option value="edge">Edge 自然语音 · 需联网</option>
+                <option value="azure">Azure 神经语音 · 需 Key（联网）</option>
+                <option value="volcengine">火山引擎 / 豆包 · 需 AppID/Token</option>
+                <option value="cosyvoice">阿里 CosyVoice · 需 API Key</option>
+                <option value="kokoro">Kokoro 本地语音 · CPU（需本地服务）</option>
+              </select>
+            </label>
+
+            <div class="cloud-config" id="azureConfig" hidden>
+              <label class="field">
+                <span>Azure Speech Key</span>
+                <input type="password" id="azureKeyInput" autocomplete="off" placeholder="粘贴 Azure 语音资源的 Key">
+              </label>
+              <div class="cloud-config-row">
+                <label class="field">
+                  <span>区域</span>
+                  <input type="text" id="azureRegionInput" placeholder="例如 eastasia">
+                </label>
+                <label class="field">
+                  <span>说话风格</span>
+                  <select id="azureStyleSelect">
+                    <option value="">通用</option>
+                    <option value="newscast">新闻播报</option>
+                    <option value="cheerful">欢快</option>
+                    <option value="gentle">温柔</option>
+                    <option value="customerservice">客服</option>
+                    <option value="assistant">助手</option>
+                    <option value="calm">平静</option>
+                  </select>
+                </label>
+              </div>
+              <small>Key 只保存在本机 data/state.json，合成时发送给微软 Azure；不会写入日志。换区域后音色列表可能不同。</small>
+            </div>
+
+            <div class="cloud-config" id="volcConfig" hidden>
+              <div class="cloud-config-row">
+                <label class="field">
+                  <span>火山引擎 AppID</span>
+                  <input type="text" id="volcAppIdInput" autocomplete="off" placeholder="语音应用 AppID">
+                </label>
+                <label class="field">
+                  <span>Cluster</span>
+                  <input type="text" id="volcClusterInput" placeholder="volcano_tts">
+                </label>
+              </div>
+              <label class="field">
+                <span>Access Token</span>
+                <input type="password" id="volcTokenInput" autocomplete="off" placeholder="语音应用 Access Token">
+              </label>
+              <label class="field">
+                <span>自定义 voice_type（可选）</span>
+                <input type="text" id="volcVoiceInput" placeholder="留空使用下方音色列表">
+              </label>
+              <small>豆包语音控制台获取 AppID、Access Token；Cluster 通常为 volcano_tts。Key 只保存在本机。</small>
+            </div>
+
+            <div class="cloud-config" id="cosyConfig" hidden>
+              <label class="field">
+                <span>阿里云百炼 API Key</span>
+                <input type="password" id="cosyKeyInput" autocomplete="off" placeholder="sk-...">
+              </label>
+              <div class="cloud-config-row">
+                <label class="field">
+                  <span>业务空间 ID</span>
+                  <input type="text" id="cosyWorkspaceInput" placeholder="Workspace ID，可留空走旧域名">
+                </label>
+                <label class="field">
+                  <span>地域</span>
+                  <select id="cosyRegionSelect">
+                    <option value="cn-beijing">华北2（北京）</option>
+                    <option value="ap-southeast-1">新加坡</option>
+                  </select>
+                </label>
+              </div>
+              <div class="cloud-config-row">
+                <label class="field">
+                  <span>模型</span>
+                  <select id="cosyModelSelect">
+                    <option value="cosyvoice-v3-flash">cosyvoice-v3-flash</option>
+                    <option value="cosyvoice-v3-plus">cosyvoice-v3-plus</option>
+                    <option value="cosyvoice-v2">cosyvoice-v2</option>
+                  </select>
+                </label>
+                <label class="field">
+                  <span>音色 ID</span>
+                  <input type="text" id="cosyVoiceInput" placeholder="longanyang / longxiaochun_v2">
+                </label>
+              </div>
+              <small>CosyVoice Key 只保存在本机；填写业务空间 ID 后走专属域名，留空则尝试公共域名。音色需与模型匹配。</small>
+            </div>
+
+            <label class="field">
+              <span>音色</span>
+              <select id="voiceSelect"></select>
+              <small id="voiceHint">使用 Windows 本地语音，离线可用。</small>
+            </label>
+
+            <div class="natural-voice-row">
+              <button class="btn small" id="naturalVoiceBtn" type="button">一键自然音色（Edge 晓晓）</button>
+              <small>自动切换 Edge、语速 1.05、音调 0、关闭语气浮动；需联网。</small>
+            </div>
+
+            <label class="inline-check kokoro-auto">
+              <input type="checkbox" id="autoKokoroToggle" checked>
+              <span>启动软件时自动使用 Kokoro 本地语音</span>
+            </label>
+
+            <label class="field">
+              <span>音频输出设备</span>
+              <div class="inline-row">
+                <select id="outputSelect">
+                  <option value="">系统默认输出</option>
+                </select>
+                <button class="icon-btn" id="refreshOutputBtn" type="button" title="刷新输出设备" aria-label="刷新输出设备">
+                  <svg><use href="#icon-refresh"></use></svg>
+                </button>
+              </div>
+              <small id="outputHint">Edge 自然语音可指定输出设备；本地语音跟随 Windows 默认输出。</small>
+            </label>
+
+            <div class="voice-pack-row">
+              <button class="btn small" id="packBtn" type="button">生成当前清单离线包</button>
+              <span id="packState">先生成播放清单，再缓存为本地音频</span>
+            </div>
+
+            <div class="slider-field">
+              <div class="slider-head"><span>语速</span><b id="rateVal">1.00×</b></div>
+              <input type="range" id="rateRange" min="0.7" max="1.3" step="0.05" value="1">
+            </div>
+            <div class="slider-field">
+              <div class="slider-head"><span>音调</span><b id="pitchVal">0</b></div>
+              <input type="range" id="pitchRange" min="-30" max="30" step="5" value="0">
+            </div>
+            <div class="slider-field">
+              <div class="slider-head"><span>音量</span><b id="volumeVal">100%</b></div>
+              <input type="range" id="volumeRange" min="0" max="100" step="5" value="100">
+            </div>
+
+            <div class="voice-tip">
+              <svg><use href="#icon-warning"></use></svg>
+              <p id="voiceTipText">直播时用 OBS 采集“桌面音频”即可把声音送进直播间。</p>
+            </div>
+          </section>
+
+
+          <section class="card music-card" id="musicCard">
+            <div class="card-head compact">
+              <div class="head-title">
+                <span class="section-no">05</span>
+                <div>
+                  <span class="kicker">SHOWROOM MUSIC</span>
+                  <h2>背景音乐</h2>
+                </div>
+              </div>
+              <span class="music-status" id="musicState">未播放</span>
+            </div>
+
+            <div class="music-now">
+              <button class="music-main-btn" id="musicPlayBtn" type="button" title="播放背景音乐" aria-label="播放背景音乐">
+                <svg><use href="#icon-play"></use></svg>
+              </button>
+              <div class="music-now-copy">
+                <b id="musicTitle">还没有音乐</b>
+                <small id="musicMeta">添加本地音乐后，可随机或顺序播放</small>
+              </div>
+              <button class="icon-btn" id="musicNextBtn" type="button" title="下一首" aria-label="下一首">
+                <svg><use href="#icon-next"></use></svg>
+              </button>
+            </div>
+
+            <div class="music-toolbar">
+              <label class="music-volume">
+                <span>音量</span>
+                <input type="range" id="musicVolume" min="0" max="100" step="5" value="18">
+                <b id="musicVolumeVal">18%</b>
+              </label>
+              <label class="music-mode">
+                <span>播放方式</span>
+                <select id="musicMode">
+                  <option value="random">随机</option>
+                  <option value="sequential">顺序</option>
+                </select>
+              </label>
+            </div>
+
+            <div class="music-actions">
+              <button class="btn small" id="musicAddBtn" type="button">
+                <svg><use href="#icon-plus"></use></svg>
+                添加本地音乐
+              </button>
+              <button class="text-btn" id="musicClearBtn" type="button">清空列表</button>
+              <input type="file" id="musicFileInput" accept="audio/*,.mp3,.m4a,.aac,.wav,.ogg,.flac,.webm" multiple hidden>
+            </div>
+
+            <div class="music-list" id="musicList"></div>
+            <p class="music-tip">音乐独立播放，不会暂停或打断讲稿 / 公屏语音。请使用你拥有播放权的素材。</p>
+          </section>
+          <section class="card tips-card">
+            <span class="kicker">QUICK TIPS</span>
+            <h2>一场更自然的轮播</h2>
+            <ol>
+              <li><b>先选车型再开播。</b>每个车型独立保存讲稿，切换后只读当前车型。</li>
+              <li><b>多车型文档用标题分段。</b>【雅阁】、雅阁：、## 奥德赛 都可自动识别。</li>
+              <li><b>改写强度 50–65%。</b>每轮只换一两个形容词，避免整段变味。</li>
+            </ol>
+          </section>
+        </aside>
+      </div>
+      </div>
+
+      <section class="chat-view" id="chatView" hidden>
+        <div class="chat-hero">
+          <div class="chat-hero-copy">
+            <span class="kicker">DOUYIN LIVE ASSIST</span>
+            <h2>抖音公屏助手</h2>
+            <p>连接抖音直播间，读取公屏问题，按规则欢迎和回复；有新消息时先暂停讲稿，用语音播报回复，再继续讲稿。</p>
+            <div class="chat-meta">
+              <span class="chat-conn offline" id="chatConn"><i></i><span>扩展未连接</span></span>
+              <span class="chat-model-pill">当前车型 <b id="chatModel">通用</b></span>
+              <span class="chat-room-pill" id="chatRoom" hidden>房间 --</span>
+            </div>
+          </div>
+          <div class="chat-hero-actions">
+            <button class="btn primary" id="openDouyinBtn" type="button">
+              <svg><use href="#icon-send"></use></svg>
+              打开抖音直播间
+            </button>
+            <button class="btn light" id="extHelpBtn" type="button">
+              <svg><use href="#icon-help"></use></svg>
+              安装 / 连接扩展
+            </button>
+          </div>
+        </div>
+
+        <div class="chat-layout">
+          <div class="chat-left">
+            <section class="card chat-feed-card">
+              <div class="card-head">
+                <div class="head-title">
+                  <span class="section-no">01</span>
+                  <div>
+                    <span class="kicker">LIVE CHAT</span>
+                    <h2>实时公屏</h2>
+                  </div>
+                </div>
+                <div class="btn-row">
+                  <span class="chat-count" id="chatCount">0 条</span>
+                  <button class="btn small ghost" id="chatClearBtn" type="button">清空</button>
+                </div>
+              </div>
+              <div class="chat-feed" id="chatFeed">
+                <div class="chat-empty">
+                  <div class="chat-empty-icon"><svg><use href="#icon-chat"></use></svg></div>
+                  <strong>等待公屏消息</strong>
+                  <p>先安装浏览器扩展，打开自己的抖音直播间。扩展连接后，观众问题和进入提醒会显示在这里。</p>
+                </div>
+              </div>
+            </section>
+
+            <section class="card chat-rules-card">
+              <div class="card-head">
+                <div class="head-title">
+                  <span class="section-no">02</span>
+                  <div>
+                    <span class="kicker">REPLY RULES</span>
+                    <h2>关键词回复 <em id="ruleCount">0</em></h2>
+                  </div>
+                </div>
+                <div class="btn-row">
+                  <button class="btn small" id="addRuleBtn" type="button">
+                    <svg><use href="#icon-plus"></use></svg>
+                    新增规则
+                  </button>
+                </div>
+              </div>
+              <div class="chat-rules-list" id="rulesList"></div>
+            </section>
+          </div>
+
+          <aside class="chat-right">
+            <section class="card chat-control-card">
+              <div class="card-head compact">
+                <div class="head-title">
+                  <span class="section-no">03</span>
+                  <div>
+                    <span class="kicker">AUTO REPLY</span>
+                    <h2>自动回复</h2>
+                  </div>
+                </div>
+                <span class="chat-mode" id="chatMode">建议模式</span>
+              </div>
+
+              <div class="chat-switch-row">
+                <div><b>启用回复引擎</b><small>关闭后只记录公屏，不生成回复。</small></div>
+                <label class="switch"><input type="checkbox" id="chatEnabledToggle" checked><span></span></label>
+              </div>
+              <div class="chat-switch-row">
+                <div><b>自动发送到抖音</b><small>关闭时只在软件里给建议，需手动复制。</small></div>
+                <label class="switch"><input type="checkbox" id="chatAutoSendToggle"><span></span></label>
+              </div>
+              <div class="chat-switch-row">
+                <div><b>欢迎新观众</b><small>检测到“来了 / 进入直播间”时发送欢迎语。</small></div>
+                <label class="switch"><input type="checkbox" id="chatWelcomeToggle" checked><span></span></label>
+              </div>
+              <div class="chat-switch-row">
+                <div><b>语音播报回复</b><small>公屏有新消息时暂停讲稿，先读出回复，再继续。</small></div>
+                <label class="switch"><input type="checkbox" id="chatVoiceToggle" checked><span></span></label>
+              </div>
+
+              <label class="chat-field">
+                <span>欢迎语</span>
+                <textarea id="welcomeTemplate" rows="3"></textarea>
+                <small>可用占位符：<code>{昵称}</code>、<code>{车型}</code>。</small>
+              </label>
+
+              <div class="chat-limit-grid">
+                <label class="chat-field"><span>最短间隔</span>
+                  <select id="minIntervalSec">
+                    <option value="5">5 秒</option>
+                    <option value="8" selected>8 秒</option>
+                    <option value="12">12 秒</option>
+                    <option value="20">20 秒</option>
+                  </select>
+                </label>
+                <label class="chat-field"><span>每分钟上限</span>
+                  <select id="maxPerMinute">
+                    <option value="3">3 条</option>
+                    <option value="6" selected>6 条</option>
+                    <option value="10">10 条</option>
+                  </select>
+                </label>
+                <label class="chat-field"><span>同用户冷却</span>
+                  <select id="userCooldownSec">
+                    <option value="0">不限制</option>
+                    <option value="30">30 秒</option>
+                    <option value="45" selected>45 秒</option>
+                    <option value="90">90 秒</option>
+                  </select>
+                </label>
+              </div>
+
+              <button class="btn primary chat-save-btn" id="saveChatBtn" type="button">
+                <svg><use href="#icon-check"></use></svg>
+                保存互动设置
+              </button>
+              <p class="chat-warning">
+                <svg><use href="#icon-warning"></use></svg>
+                自动发送属于平台自动化操作，可能触发风控或违反平台规则。建议先用“建议模式”，确认话术后再开启，并控制频率。
+              </p>
+            </section>
+
+            <section class="card chat-test-card">
+              <div class="card-head compact">
+                <div class="head-title">
+                  <span class="section-no">04</span>
+                  <div><span class="kicker">TEST</span><h2>模拟测试</h2></div>
+                </div>
+              </div>
+              <div class="chat-test-form">
+                <input id="testNickname" type="text" placeholder="观众昵称，例如：小王">
+                <input id="testText" type="text" placeholder="观众问题，例如：这个车多少钱？">
+                <div class="btn-row">
+                  <button class="btn small light" id="testWelcomeBtn" type="button">模拟进入</button>
+                  <button class="btn small primary" id="testQuestionBtn" type="button">模拟提问</button>
+                </div>
+              </div>
+              <div class="chat-test-result" id="testResult">测试不会真的发到抖音，只验证规则和欢迎语。</div>
+            </section>
+
+            <section class="card chat-extension-card">
+              <div class="card-head compact">
+                <div class="head-title">
+                  <span class="section-no">05</span>
+                  <div><span class="kicker">CONNECTION</span><h2>连接抖音</h2></div>
+                </div>
+              </div>
+              <ol class="chat-steps">
+                <li>Edge 地址栏打开 <code>edge://extensions</code>，开启“开发者模式”。</li>
+                <li>点击“加载解压缩的扩展”，选择软件目录下的 <code>douyin-extension</code> 文件夹。</li>
+                <li>打开你自己的抖音直播间，保持页面在前台，扩展会自动连接本软件。</li>
+              </ol>
+              <button class="text-btn" id="copyExtensionPath" type="button">
+                <svg><use href="#icon-copy"></use></svg>
+                复制扩展文件夹路径
+              </button>
+              <p class="chat-extension-state" id="extensionHint">扩展未连接。安装后刷新直播间页面。</p>
+            </section>
+          </aside>
+        </div>
+      </section>
+
+      <footer class="page-footer">
+        <span>驰声 · 本地运行，讲稿不会上传</span>
+        <span>合成语音请按平台规则标注 · 不承诺规避平台识别</span>
+      </footer>
+    </main>
+  </div>
+
+  <dialog class="help-dialog" id="helpDialog">
+    <div class="dialog-head">
+      <div>
+        <span class="kicker">GETTING STARTED</span>
+        <h2>三步开始口播</h2>
+      </div>
+      <button class="icon-btn" id="closeHelpBtn" type="button" aria-label="关闭">
+        <svg><use href="#icon-close"></use></svg>
+      </button>
+    </div>
+    <div class="dialog-body">
+      <div class="help-step">
+        <span>01</span>
+        <div><b>放入讲稿</b><p>粘贴文本，或导入 TXT / Markdown / Word。多车型文档用【雅阁】、雅阁：、## 奥德赛 等标题分段，软件会自动拆分到对应车型。</p></div>
+      </div>
+      <div class="help-step">
+        <span>02</span>
+        <div><b>选择车型和编排方式</b><p>点击上方车型按钮切换讲稿；推荐“智能轮播”：段落顺序随机，每段保留首句，其余句子随机；形容词会按强度自动换成近义词。含“第一、第二、第三”的段落会自动整段保留，不拆句、不打乱内部顺序。</p></div>
+      </div>
+      <div class="help-step">
+        <span>03</span>
+        <div><b>生成并朗读</b><p>点击“生成并开始朗读”。播放时可以用空格暂停，左右键切句，Esc 停止。</p></div>
+      </div>
+
+      <div class="help-note">
+        <b>关于车型讲稿</b>
+        <p>广汽本田：雅阁、奥德赛、型格、冠道、皓影；广汽传祺：M8、E8、越7、M6、S7、GS4。车型按钮上的绿点表示该车型已录入讲稿。</p>
+      </div>
+      <div class="help-note">
+        <b>关于直播声音</b>
+        <p>软件在本机运行，默认调用 Windows 本地语音，离线也能用。想要更自然的音色，可运行目录里的“安装自然语音.cmd”，安装后把引擎切到“Edge 自然语音”。</p>
+      </div>
+      <div class="help-note">
+        <b>关于直播互动</b>
+        <p>左侧“直播互动”页需要先安装软件目录里的 <code>douyin-extension</code> 扩展。默认是建议模式，只生成回复不发送；确认话术后再开启自动发送。</p>
+      </div>
+      <div class="help-note warn">
+        <b>合规提醒</b>
+        <p>随机编排和近义替换只能降低内容的机械重复感，不能保证不被平台识别。合成语音直播可能受平台规则限制，请按要求标注 AI 合成内容，并遵守平台与广告相关法规。</p>
+      </div>
+    </div>
+    <div class="dialog-foot">
+      <button class="btn primary" id="helpDoneBtn" type="button">知道了</button>
+    </div>
+  </dialog>
+
+  <dialog class="help-dialog chat-dialog" id="ruleDialog">
+    <div class="dialog-head">
+      <div>
+        <span class="kicker">REPLY RULE</span>
+        <h2 id="ruleDialogTitle">新增回复规则</h2>
+      </div>
+      <button class="icon-btn" id="closeRuleBtn" type="button" aria-label="关闭">
+        <svg><use href="#icon-close"></use></svg>
+      </button>
+    </div>
+    <div class="dialog-body">
+      <label class="chat-field">
+        <span>关键词</span>
+        <input id="ruleKeywords" type="text" placeholder="用逗号分隔，例如：价格, 多少钱, 优惠">
+        <small>观众消息里命中任意一个关键词就会触发。</small>
+      </label>
+      <label class="chat-field">
+        <span>回复内容</span>
+        <textarea id="ruleReply" rows="5" placeholder="例如：具体落地价要看配置，点下方小风车留个电话，我把报价发你～"></textarea>
+        <small>可用占位符：<code>{昵称}</code>、<code>{车型}</code>。</small>
+      </label>
+    </div>
+    <div class="dialog-foot">
+      <button class="btn ghost" id="cancelRuleBtn" type="button">取消</button>
+      <button class="btn primary" id="saveRuleBtn" type="button">保存规则</button>
+    </div>
+  </dialog>
+
+  <dialog class="help-dialog chat-dialog" id="extDialog">
+    <div class="dialog-head">
+      <div>
+        <span class="kicker">DOUYIN EXTENSION</span>
+        <h2>安装 / 连接抖音扩展</h2>
+      </div>
+      <button class="icon-btn" id="closeExtBtn" type="button" aria-label="关闭">
+        <svg><use href="#icon-close"></use></svg>
+      </button>
+    </div>
+    <div class="dialog-body">
+      <div class="help-step"><span>01</span><div><b>打开扩展管理</b><p>Edge 地址栏输入 <code>edge://extensions</code>，打开右上角“开发者模式”。</p></div></div>
+      <div class="help-step"><span>02</span><div><b>加载扩展文件夹</b><p>点击“加载解压缩的扩展”，选择软件目录下的 <code>douyin-extension</code> 文件夹。</p></div></div>
+      <div class="help-step"><span>03</span><div><b>打开自己的直播间</b><p>登录抖音网页版，进入自己的直播间，保持页面在前台。扩展会自动连接本软件，看到“已连接”即可。</p></div></div>
+      <div class="help-note">
+        <b>扩展文件夹位置</b>
+        <p id="extPathText">加载软件目录下的 douyin-extension 文件夹。</p>
+        <button class="text-btn" id="copyExtPathBtn2" type="button"><svg><use href="#icon-copy"></use></svg>复制路径</button>
+      </div>
+      <div class="help-note warn">
+        <b>使用提示</b>
+        <p>抖音网页结构会更新，若公屏读不到，请到扩展设置里调整聊天节点选择器。自动发送可能触发平台风控，建议先用“建议模式”。</p>
+      </div>
+    </div>
+    <div class="dialog-foot">
+      <button class="btn primary" id="extDoneBtn" type="button">知道了</button>
+    </div>
+  </dialog>
+
+  <div class="toast" id="toast" role="status" aria-live="polite"></div>
+
+  <script src="core.js"></script>
+  <script src="app.js"></script>
+  <script src="chat.js"></script>
+</body>
+</html>

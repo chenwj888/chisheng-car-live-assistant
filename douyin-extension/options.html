@@ -1,0 +1,100 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <title>驰声直播互动 · 扩展设置</title>
+  <style>
+    :root { color-scheme: light; }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0; padding: 28px;
+      background: #f6f4ef; color: #1f2933;
+      font-family: "Microsoft YaHei UI", "Microsoft YaHei", "PingFang SC", sans-serif;
+      font-size: 13px; line-height: 1.6;
+    }
+    .wrap { max-width: 940px; margin: 0 auto; }
+    .head { margin-bottom: 18px; }
+    .head small { color: #9a8876; font-family: Consolas, monospace; letter-spacing: 1.5px; font-size: 9px; }
+    h1 { margin: 6px 0 4px; font-size: 26px; letter-spacing: .5px; }
+    .head p { margin: 0; color: #6d7883; font-size: 12px; }
+    .card {
+      margin-bottom: 14px; padding: 18px 20px; border: 1px solid #e8e2d8;
+      border-radius: 16px; background: #fff; box-shadow: 0 12px 34px rgba(36,45,55,.06);
+    }
+    h2 { margin: 0 0 10px; font-size: 14px; }
+    .hint { margin: 0 0 12px; color: #7f8a94; font-size: 11px; }
+    label { display: block; margin-top: 10px; }
+    label span { display: block; margin-bottom: 4px; color: #5f6b77; font-size: 10px; }
+    input {
+      width: 100%; height: 34px; padding: 0 10px; border: 1px solid #e3ddd3;
+      border-radius: 8px; background: #fcfaf6; color: #26313b; font-size: 12px;
+    }
+    input.code { font-family: Consolas, monospace; font-size: 11px; }
+    .two { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+    .actions { display: flex; gap: 8px; margin-top: 14px; flex-wrap: wrap; }
+    button {
+      min-height: 34px; padding: 7px 14px; border: 1px solid #ddd6cb; border-radius: 8px;
+      background: #fff; color: #27333d; font-size: 12px; cursor: pointer;
+    }
+    button.primary { border-color: #ec7c52; background: linear-gradient(135deg,#f48357,#e9582b); color: #fff; }
+    button:hover { filter: brightness(.98); }
+    .status { margin-top: 12px; padding: 10px; border: 1px dashed #e5ddd2; border-radius: 8px; background: #fcfaf6; color: #7d8892; font-size: 11px; white-space: pre-wrap; }
+    .status.ok { border-color: #c8e7df; background: #f3fbf8; color: #087d6d; }
+    .status.err { border-color: #f0c7c7; background: #fff7f7; color: #b33c3c; }
+    code { padding: 1px 4px; border-radius: 4px; background: #f2ede5; color: #9e5b3c; font-size: 10px; }
+    .note { border-color: #f0dfc0; background: #fffbf1; color: #8a7552; font-size: 11px; }
+    .footer { color: #9aa3ab; font-size: 10px; text-align: center; margin: 14px 0 0; }
+    @media (max-width: 700px) { body { padding: 16px; } .two { grid-template-columns: 1fr; } }
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <div class="head">
+      <small>CHISHENG · DOUYIN BRIDGE</small>
+      <h1>直播互动扩展设置</h1>
+      <p>扩展只在你打开的抖音直播间页面运行，把公屏消息发给本机的驰声软件。</p>
+    </div>
+
+    <section class="card">
+      <h2>连接本机软件</h2>
+      <p class="hint">一般留空即可，扩展会自动尝试 8765–8770 和 8877 端口。若软件使用了其他端口，请填写完整地址。</p>
+      <div class="two">
+        <label><span>软件地址（可选）</span><input id="baseUrl" class="code" placeholder="http://127.0.0.1:8765"></label>
+        <label><span>只监听指定房间号（可选）</span><input id="roomId" class="code" placeholder="例如 123456789"></label>
+      </div>
+      <div class="actions">
+        <button class="primary" id="saveBtn" type="button">保存设置</button>
+        <button id="testBtn" type="button">测试连接</button>
+      </div>
+      <div class="status" id="connStatus">尚未测试连接。</div>
+    </section>
+
+    <section class="card">
+      <h2>抖音页面选择器</h2>
+      <p class="hint">抖音网页结构变化时，公屏可能读不到。一般不需要改；如果扩展日志提示找不到节点，再按页面实际结构调整。</p>
+      <label><span>聊天列表容器</span><input id="chatContainer" class="code"></label>
+      <label><span>单条消息节点</span><input id="messageSelector" class="code"></label>
+      <label><span>聊天输入框</span><input id="inputSelector" class="code"></label>
+      <label><span>发送按钮</span><input id="sendSelector" class="code"></label>
+      <div class="actions">
+        <button id="resetSelectorsBtn" type="button">恢复默认选择器</button>
+      </div>
+    </section>
+
+    <section class="card">
+      <h2>调试</h2>
+      <label style="display:flex;align-items:center;gap:8px;margin-top:0">
+        <input id="debug" type="checkbox" style="width:auto;height:auto">
+        <span style="margin:0;font-size:12px;color:#34414c">在抖音页面的控制台输出调试日志</span>
+      </label>
+      <p class="hint" style="margin-top:10px">打开直播间后按 F12 → Console，可以看到 <code>[驰声互动]</code> 开头的日志。自动发送默认关闭，先在软件里用“建议模式”测试。</p>
+    </section>
+
+    <div class="card note">
+      自动发送可能触发抖音风控或违反平台规则。请只在自有直播间使用，控制频率，并遵守平台规则。扩展不会绕过登录、验证码或平台安全限制。
+    </div>
+    <p class="footer">驰声 · 本地运行 · 扩展版本 1.0.0</p>
+  </div>
+  <script src="options.js"></script>
+</body>
+</html>

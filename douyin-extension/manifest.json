@@ -1,0 +1,26 @@
+{
+  "manifest_version": 3,
+  "name": "驰声 · 抖音直播互动桥",
+  "version": "1.0.0",
+  "description": "读取抖音直播间的公屏消息，按驰声直播互动规则欢迎和回复。",
+  "permissions": ["storage"],
+  "host_permissions": [
+    "http://127.0.0.1/*",
+    "http://localhost/*",
+    "https://live.douyin.com/*"
+  ],
+  "background": {
+    "service_worker": "background.js"
+  },
+  "content_scripts": [
+    {
+      "matches": ["https://live.douyin.com/*"],
+      "js": ["content.js"],
+      "run_at": "document_idle"
+    }
+  ],
+  "options_page": "options.html",
+  "action": {
+    "default_title": "驰声直播互动"
+  }
+}

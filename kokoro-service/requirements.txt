@@ -1,0 +1,10 @@
+# Kokoro-82M-v1.1-zh local service
+# 使用 Python 3.12；安装命令见 安装Kokoro语音.ps1
+kokoro-onnx==0.4.8
+misaki[zh]==0.9.4
+soundfile>=0.13
+fastapi>=0.115
+uvicorn>=0.30
+requests>=2.31
+numpy==2.2.5
+onnxruntime==1.21.1
