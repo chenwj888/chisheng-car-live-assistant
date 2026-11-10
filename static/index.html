@@ -150,7 +150,7 @@
 
             <div class="model-picker" id="modelPicker">
               <div class="model-picker-head">
-                <span class="model-picker-label">车型讲稿</span>
+                <span class="model-picker-label">编辑车型</span>
                 <span class="model-current" id="modelCurrent">通用</span>
                 <button class="text-btn model-split-btn" id="splitModelsBtn" type="button" disabled>
                   <svg><use href="#icon-spark"></use></svg>
@@ -162,6 +162,7 @@
                 <span id="modelHint">支持【雅阁】、雅阁：、## 雅阁 等车型标题</span>
                 <button class="text-btn" id="useCommonBtn" type="button" hidden>使用通用稿</button>
               </div>
+              <div class="model-play-hint">这里只切换要编辑的讲稿；播放哪几款，在下方“1. 选择播放车型”里决定。</div>
             </div>
 
             <div class="editor-wrap" id="editorWrap">
@@ -193,6 +194,41 @@
                 </div>
               </div>
               <span class="soft-badge"><svg><use href="#icon-spark"></use></svg>每轮自动换一种说法</span>
+            </div>
+
+            <div class="flow-hint">1 选播放车型 → 2 选编排策略 → 3 生成播放清单 → 4 播放</div>
+
+            <div class="multi-panel" id="multiPanel">
+              <div class="multi-head">
+                <div>
+                  <b>1. 选择播放车型（可单选 / 多选）</b>
+                  <small>选 1 款就是单车型，选多款就是多车型；每款车的讲稿独立生成，不串稿。</small>
+                </div>
+                <div class="multi-head-actions">
+                  <button class="text-btn" id="multiAllBtn" type="button">全选有稿</button>
+                  <button class="text-btn" id="multiClearBtn" type="button">清空</button>
+                </div>
+              </div>
+              <div class="multi-models" id="multiModels"></div>
+              <div class="multi-options">
+                <label class="multi-radio"><input type="radio" name="multiOrder" value="preset" checked> 按车型目录顺序</label>
+                <label class="multi-radio"><input type="radio" name="multiOrder" value="shuffle"> 随机车型顺序</label>
+                <label class="inline-check"><input type="checkbox" id="multiIntroToggle" checked> 切换时插入通用讲稿</label>
+                <span class="multi-step-note">选好后点下方“生成播放清单”</span>
+              </div>
+              <label class="multi-general">
+                <span>通用插入语（互动 / 门店优势 / 优惠政策）</span>
+                <textarea id="multiGeneralText" rows="2"></textarea>
+              </label>
+              <label class="inline-check single-intro-toggle">
+                <input type="checkbox" id="singleIntroToggle">
+                <span>单车型播放时也插入互动话术</span>
+              </label>
+              <label class="multi-general single-intro-field">
+                <span>单车型互动话术</span>
+                <textarea id="singleIntroText" rows="2"></textarea>
+              </label>
+              <p class="multi-tip">每款车仍按自己的讲稿单独生成，不会串稿；勾选“切换时插入通用讲稿”后，上面的通用插入语会出现在每款车之前；可以写点赞、关注、转发、公屏互动，也可以写门店优势和优惠。</p>
             </div>
 
             <div class="strategy-grid">
@@ -315,13 +351,13 @@
             </details>
 
             <div class="strategy-actions">
-              <button class="btn primary" id="buildPlayBtn" type="button">
-                <svg><use href="#icon-play"></use></svg>
-                生成并开始朗读
+              <button class="btn primary" id="buildPlaylistBtn" type="button">
+                <svg><use href="#icon-queue"></use></svg>
+                3. 生成播放清单
               </button>
-              <button class="btn ghost" id="buildBtn" type="button">
-                <svg><use href="#icon-shuffle"></use></svg>
-                只生成清单
+              <button class="btn ghost" id="playPlaylistBtn" type="button" disabled>
+                <svg><use href="#icon-play"></use></svg>
+                <span id="playPlaylistLabel">4. 播放清单</span>
               </button>
               <span class="action-note">快捷键 <kbd>Ctrl</kbd> + <kbd>Enter</kbd></span>
             </div>
@@ -349,47 +385,11 @@
               </div>
             </div>
 
-            <div class="multi-panel" id="multiPanel">
-              <div class="multi-head">
-                <div>
-                  <b>多车型播放</b>
-                  <small>勾选车型，按预设顺序或随机串成一份清单；各车型讲稿分开生成，不串稿。</small>
-                </div>
-                <div class="multi-head-actions">
-                  <button class="text-btn" id="multiAllBtn" type="button">全选有稿</button>
-                  <button class="text-btn" id="multiClearBtn" type="button">清空</button>
-                </div>
-              </div>
-              <div class="multi-models" id="multiModels"></div>
-              <div class="multi-options">
-                <label class="multi-radio"><input type="radio" name="multiOrder" value="preset" checked> 预设顺序</label>
-                <label class="multi-radio"><input type="radio" name="multiOrder" value="shuffle"> 随机车型</label>
-                <label class="inline-check"><input type="checkbox" id="multiIntroToggle" checked> 切换时插入通用讲稿</label>
-                <button class="btn small" id="multiBuildBtn" type="button">
-                  <svg><use href="#icon-queue"></use></svg>
-                  生成多车型清单
-                </button>
-              </div>
-              <label class="multi-general">
-                <span>通用插入语（互动 / 门店优势 / 优惠政策）</span>
-                <textarea id="multiGeneralText" rows="2"></textarea>
-              </label>
-              <label class="inline-check single-intro-toggle">
-                <input type="checkbox" id="singleIntroToggle">
-                <span>单车型播放时也插入互动话术</span>
-              </label>
-              <label class="multi-general single-intro-field">
-                <span>单车型互动话术</span>
-                <textarea id="singleIntroText" rows="2"></textarea>
-              </label>
-              <p class="multi-tip">每款车仍按自己的讲稿单独生成，不会串稿；勾选“切换时插入通用讲稿”后，上面的通用插入语会出现在每款车之前；可以写点赞、关注、转发、公屏互动，也可以写门店优势和优惠。</p>
-            </div>
-
             <div class="queue-list" id="queueList" role="list"></div>
             <div class="queue-empty" id="queueEmpty">
               <div class="empty-glyph"><svg><use href="#icon-queue"></use></svg></div>
               <strong>清单还没有生成</strong>
-              <p>导入讲稿后，点击“生成并开始朗读”。句子会在这里按本轮顺序排列。</p>
+              <p>先选择播放车型和编排策略，再点击“生成播放清单”。句子会在这里按本轮顺序排列。</p>
             </div>
           </section>
         </div>
@@ -417,7 +417,7 @@
             </div>
 
             <div class="now-text" id="nowText" aria-live="polite">
-              <span class="now-placeholder">点击“生成并开始朗读”<br>当前句子会显示在这里</span>
+              <span class="now-placeholder">点击“生成播放清单”后<br>当前句子会显示在这里</span>
             </div>
 
             <div class="progress-track"><div class="progress-fill" id="progressBar"></div></div>
@@ -438,7 +438,7 @@
               </button>
             </div>
 
-            <div class="play-caption">播放键会按当前车型自动生成并朗读清单</div>
+            <div class="play-caption">生成清单后点播放；播放时会显示当前车型</div>
 
             <div class="player-actions">
               <button class="text-btn" id="queueShuffleBtn2" type="button">
@@ -892,7 +892,7 @@
       </div>
       <div class="help-step">
         <span>03</span>
-        <div><b>生成并朗读</b><p>点击“生成并开始朗读”。播放时可以用空格暂停，左右键切句，Esc 停止。</p></div>
+        <div><b>生成并朗读</b><p>先选播放车型 → 选编排策略 → 生成播放清单 → 点播放。播放时可以用空格暂停，左右键切句，Esc 停止。</p></div>
       </div>
 
       <div class="help-note">

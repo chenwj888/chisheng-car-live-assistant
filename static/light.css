@@ -815,3 +815,10 @@ body.light .cloud-config {
   background: #fbf8f3;
 }
 body.light .cloud-config small { color: #8e99a2; }
+
+
+body.light .flow-hint {
+  border-color: #eee5da;
+  background: #fbf8f3;
+  color: #5f6b74;
+}

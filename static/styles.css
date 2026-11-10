@@ -3083,3 +3083,33 @@ mark.changed {
 
 .single-intro-toggle { margin-top: 8px; }
 .single-intro-field { margin-top: 6px; }
+
+
+.multi-step-note {
+  margin-left: auto;
+  color: var(--dim);
+  font-size: 8px;
+  line-height: 1.4;
+}
+
+
+.flow-hint {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  margin: 0 0 9px;
+  padding: 7px 9px;
+  border: 1px solid var(--line);
+  border-radius: 7px;
+  color: var(--muted-strong);
+  font-size: 8.5px;
+  background: var(--surface-2);
+}
+
+
+.model-play-hint {
+  margin-top: 5px;
+  color: var(--dim);
+  font-size: 8px;
+  line-height: 1.45;
+}

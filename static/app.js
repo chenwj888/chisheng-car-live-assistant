@@ -9,7 +9,7 @@
 
   const STORAGE_KEY = 'chisheng.carLive.v1';
   const DEFAULT_SETTINGS = {
-    mode: 'smart',
+    mode: 'paragraph',
     rewrite: true,
     strength: 55,
     loop: true,
@@ -179,7 +179,7 @@
       'modelGroups', 'modelCurrent', 'modelHint', 'activeModelBadge', 'splitModelsBtn', 'useCommonBtn',
       'modeSelect', 'modeHint', 'gapSelect', 'rewriteToggle', 'loopToggle', 'jitterToggle',
       'strengthRange', 'strengthVal', 'strengthField', 'protectedInput',
-      'buildPlayBtn', 'buildBtn', 'queueCount', 'queueList', 'queueEmpty', 'staleBadge',
+      'buildPlaylistBtn', 'playPlaylistBtn', 'playPlaylistLabel', 'buildPlayBtn', 'buildBtn', 'queueCount', 'queueList', 'queueEmpty', 'staleBadge',
       'queueModel', 'downloadBtn', 'queueShuffleBtn', 'queueShuffleBtn2',
       'nowText', 'queuePos', 'progressBar', 'elapsed', 'remaining', 'playBtn', 'playUse',
       'prevBtn', 'nextBtn', 'stopBtn', 'testBtn', 'testLabel', 'playerCard', 'wave', 'playerModel', 'priorityBadge',
@@ -867,6 +867,7 @@
     if (els.multiBuildBtn) {
       els.multiBuildBtn.disabled = !state.multiSelected.some(function (id) { return scriptText(id).trim(); });
     }
+    updatePlaylistActions();
   }
 
   function hasAnyScript() {
@@ -1507,6 +1508,7 @@
     els.queueModel.textContent = state.multi ? '多车型' : displayModel;
     document.title = (active ? '▶ ' : '') + displayModel + ' · 驰声汽车口播';
     updateProgress();
+    updatePlaylistActions();
   }
 
   function renderAll() {
@@ -2375,6 +2377,72 @@
     }
   }
 
+  function buildSinglePlaylist(modelId, options) {
+    const opts = options || {};
+    stopPlayback({ silent: true, resetSelection: true, resetClock: true });
+    const parsed = Core.parseScript(scriptText(modelId));
+    if (!parsed.sentences.length) {
+      toast('「' + modelName(modelId) + '」还没有可朗读的讲稿。', 'error', 3600);
+      return false;
+    }
+
+    let queue = Core.buildQueue(parsed, {
+      mode: state.settings.mode,
+      rewrite: state.settings.rewrite,
+      strength: state.settings.strength,
+      protectedWords: state.settings.protectedWords,
+      previousLastText: opts.previousLastText || null
+    });
+    queue = applyBlockedToItems(queue);
+    if (!queue.length) {
+      toast('「' + modelName(modelId) + '」的讲稿全部被禁用词过滤。', 'error', 4200);
+      return false;
+    }
+
+    if (state.settings.singleIntro) {
+      const interaction = sanitizeBlocked(singleIntroText());
+      if (interaction) {
+        queue.unshift({
+          id: 's0',
+          text: interaction,
+          original: interaction,
+          parts: [{ text: interaction, changed: false }],
+          changes: 0,
+          paragraphIndex: null,
+          sentenceIndex: 0,
+          locked: false,
+          modelId: null,
+          modelName: '互动',
+          kind: 'intro'
+        });
+      }
+    }
+
+    let sequence = 0;
+    queue.forEach(function (item) {
+      sequence += 1;
+      item.id = 's' + sequence;
+      if (item.kind === 'intro') return;
+      item.modelId = modelId;
+      item.modelName = modelName(modelId);
+      item.kind = 'model';
+    });
+
+    state.queue = queue;
+    state.current = 0;
+    state.round = opts.round === undefined ? 1 : opts.round;
+    state.finished = false;
+    state.multi = false;
+    clearStale();
+    renderAll();
+    if (!opts.silent) {
+      const changed = queue.reduce(function (total, item) { return total + (item.changes || 0); }, 0);
+      toast('已生成「' + modelName(modelId) + '」清单：' + queue.length + ' 句，改写 ' + changed + ' 处。', 'success', 3600);
+    }
+    if (opts.autoplay) startAt(0);
+    return true;
+  }
+
   function buildMultiQueue(options) {
     const opts = options || {};
     stopPlayback({ silent: true, resetSelection: true, resetClock: true });
@@ -2382,8 +2450,11 @@
       return id !== 'common' && isKnownModelId(id) && scriptText(id).trim();
     });
     if (!selected.length) {
-      toast('请至少勾选一个有讲稿的车型。', 'error', 3600);
+      toast('请先选择至少一个有讲稿的播放车型。', 'error', 3600);
       return false;
+    }
+    if (selected.length === 1) {
+      return buildSinglePlaylist(selected[0], opts);
     }
 
     let order = selected.slice();
@@ -2529,9 +2600,42 @@
     return true;
   }
 
+  function generatePlaylist(options) {
+    const opts = options || {};
+    const ok = buildMultiQueue({ silent: opts.silent, autoplay: false, previousLastText: opts.previousLastText, round: opts.round });
+    if (ok) {
+      updatePlaylistActions();
+      if (!opts.silent) els.queueCount.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    }
+    return ok;
+  }
+
+  function playPlaylist() {
+    if (!state.queue.length) {
+      const ok = generatePlaylist({ silent: true });
+      if (!ok) return;
+    }
+    if (state.playing || state.paused) {
+      togglePlay();
+      return;
+    }
+    startAt(0);
+  }
+
+  function updatePlaylistActions() {
+    const selected = state.multiSelected.filter(function (id) {
+      return id !== 'common' && isKnownModelId(id) && scriptText(id).trim();
+    });
+    if (els.buildPlaylistBtn) els.buildPlaylistBtn.disabled = !selected.length;
+    if (els.playPlaylistBtn) {
+      els.playPlaylistBtn.disabled = !state.queue.length;
+      if (els.playPlaylistLabel) els.playPlaylistLabel.textContent = state.playing ? '暂停清单' : '播放清单';
+    }
+  }
+
   function startAt(index) {
     if (!state.queue.length) {
-      if (!rebuildQueue({ silent: true })) return;
+      if (!generatePlaylist({ silent: true })) return;
     }
     const length = state.queue.length;
     if (!length) return;
@@ -2627,15 +2731,9 @@
     const previousLast = state.queue[state.queue.length - 1].text;
     const nextRound = state.round + 1;
     const shouldPlay = state.playing || state.paused;
-    if (state.multi) {
-      const ok = buildMultiQueue({ silent: true, previousLastText: previousLast, round: nextRound });
-      if (ok) toast('第 ' + nextRound + ' 轮开始，多车型清单已重新编排。', '', 1800);
-      if (ok && shouldPlay) startAt(0);
-      return;
-    }
-    rebuildQueue({ silent: true, previousLastText: previousLast, round: nextRound });
-    toast('第 ' + nextRound + ' 轮开始，已重新洗牌。', '', 1800);
-    if (shouldPlay) startAt(0);
+    const ok = generatePlaylist({ silent: true, previousLastText: previousLast, round: nextRound });
+    if (ok) toast('第 ' + nextRound + ' 轮开始，播放清单已重新编排。', '', 1800);
+    if (ok && shouldPlay) startAt(0);
   }
 
   function finishRound() {
@@ -3373,7 +3471,7 @@
       return;
     }
     if (!state.queue.length) {
-      const ok = rebuildQueue({ silent: true });
+      const ok = generatePlaylist({ silent: true });
       if (!ok) return;
     }
     if (state.playing) {
@@ -3916,23 +4014,18 @@
       }, 320);
     });
 
-    els.buildBtn.addEventListener('click', function () {
-      rebuildQueue();
-      els.queueCount.scrollIntoView({ behavior: 'smooth', block: 'center' });
-    });
+    if (els.buildPlaylistBtn) {
+      els.buildPlaylistBtn.addEventListener('click', function () {
+        generatePlaylist();
+      });
+    }
 
-    els.buildPlayBtn.addEventListener('click', function () {
-      if (!state.rawText.trim()) {
-        toast('「' + modelName(state.activeModel) + '」还没有讲稿，请先粘贴或导入。', 'error');
-        els.scriptInput.focus();
-        return;
-      }
-      const ok = rebuildQueue({ silent: true });
-      if (ok) {
+    if (els.playPlaylistBtn) {
+      els.playPlaylistBtn.addEventListener('click', function () {
         if (isRemoteEngine()) primeAudioContext();
-        startAt(0);
-      }
-    });
+        playPlaylist();
+      });
+    }
 
     els.playBtn.addEventListener('click', togglePlay);
     els.prevBtn.addEventListener('click', playPrevious);
@@ -3945,19 +4038,11 @@
     els.queueShuffleBtn.addEventListener('click', function () {
       const wasActive = state.playing || state.paused;
       const previousLast = state.queue.length ? state.queue[state.queue.length - 1].text : null;
-      if (state.multi) {
-        const ok = buildMultiQueue({ silent: true, previousLastText: previousLast, round: state.round + 1 });
-        if (ok && wasActive) startAt(0);
-        if (ok) toast('多车型清单已重新编排。', 'success', 2200);
-        return;
+      const ok = generatePlaylist({ silent: true, previousLastText: previousLast, round: state.round + 1 });
+      if (ok) {
+        if (wasActive) startAt(0);
+        toast('播放清单已重新编排。', 'success', 2200);
       }
-      if (!state.rawText.trim()) {
-        toast('请先写入讲稿。', 'error');
-        return;
-      }
-      rebuildQueue({ silent: true, previousLastText: previousLast, round: state.round + 1 });
-      if (wasActive) startAt(0);
-      toast('已重新洗牌，开始新一轮。', 'success', 2200);
     });
 
     if (els.multiAllBtn) {
@@ -4362,7 +4447,7 @@
       if (els.scriptView && els.scriptView.hidden) return;
       if ((event.ctrlKey || event.metaKey) && event.key === 'Enter') {
         event.preventDefault();
-        els.buildPlayBtn.click();
+        if (els.buildPlaylistBtn) els.buildPlaylistBtn.click();
         return;
       }
       if (event.key === 'Escape' && (state.playing || state.paused)) {
