@@ -23,3 +23,5 @@ music/
 runtime.json
 vendor-*/
 github-upload/
+tests/tmp-*.js
+*-layout.png
