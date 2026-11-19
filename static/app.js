@@ -51,6 +51,7 @@
     rate: 1,
     pitch: 0,
     volume: 1,
+    volumeBoost: true,
     protectedWords: ''
   };
 
@@ -155,6 +156,7 @@
     cancelCurrentUtterance: null,
     audioCtx: null,
     audioGain: null,
+    audioCompressor: null,
     audioSource: null,
     audioStopResolve: null,
     abortController: null,
@@ -200,7 +202,7 @@
       'azureConfig', 'azureKeyInput', 'azureRegionInput', 'azureStyleSelect',
       'volcConfig', 'volcAppIdInput', 'volcTokenInput', 'volcClusterInput', 'volcVoiceInput',
       'cosyConfig', 'cosyKeyInput', 'cosyWorkspaceInput', 'cosyRegionSelect', 'cosyModelSelect', 'cosyVoiceInput', 'rateRange', 'rateVal', 'pitchRange',
-      'pitchVal', 'volumeRange', 'volumeVal', 'voiceTipText',
+      'pitchVal', 'volumeRange', 'volumeVal', 'volumeBoostToggle', 'voiceTipText',
       'outputSelect', 'refreshOutputBtn', 'outputHint', 'packBtn', 'packState', 'autoKokoroToggle',
       'multiModels', 'multiAllBtn', 'multiClearBtn', 'multiBuildBtn', 'multiIntroToggle', 'multiPanel', 'multiGeneralText',
       'sfxToggle', 'sfxBody', 'sfxMode', 'sfxEvery', 'sfxPlayMode', 'sfxVolume', 'sfxVolumeVal', 'sfxTestBtn', 'sfxState',
@@ -912,6 +914,7 @@
     next.rate = clamp(Number(next.rate) || 1, 0.7, 1.3);
     next.pitch = clamp(Number(next.pitch) || 0, -30, 30);
     next.volume = clamp(Number(next.volume) || 0, 0, 1);
+    next.volumeBoost = next.volumeBoost !== false;
     if (!['local', 'edge', 'azure', 'volcengine', 'cosyvoice', 'kokoro'].includes(next.engine)) next.engine = 'local';
     next.protectedWords = String(next.protectedWords || '');
     next.edgeVoice = String(next.edgeVoice || DEFAULT_SETTINGS.edgeVoice);
@@ -1307,6 +1310,7 @@
     els.rateRange.value = String(state.settings.rate);
     els.pitchRange.value = String(state.settings.pitch);
     els.volumeRange.value = String(Math.round(state.settings.volume * 100));
+    if (els.volumeBoostToggle) els.volumeBoostToggle.checked = state.settings.volumeBoost;
     els.engineSelect.value = state.settings.engine;
     if (els.azureKeyInput) els.azureKeyInput.value = state.settings.azureKey;
     if (els.azureRegionInput) els.azureRegionInput.value = state.settings.azureRegion;
@@ -3029,7 +3033,7 @@
 
     let result = { ok: false };
     try {
-      if (isRemoteEngine()) {
+      if (isRemoteEngine() || shouldUseBoostedEdge()) {
         result = await speakEdge(item, run);
       } else {
         result = await speakLocal(item, run);
@@ -3191,16 +3195,35 @@
     stopAudioSource();
   }
 
+  function masterGainValue() {
+    const base = clamp(Number(state.settings.volume) || 0, 0, 1);
+    return clamp(base * (state.settings.volumeBoost === false ? 1 : 1.8), 0, 2);
+  }
+
+  function setupAudioChain() {
+    if (!state.audioCtx) return;
+    if (!state.audioGain) state.audioGain = state.audioCtx.createGain();
+    if (!state.audioCompressor) {
+      const comp = state.audioCtx.createDynamicsCompressor();
+      comp.threshold.value = -10;
+      comp.knee.value = 12;
+      comp.ratio.value = 3;
+      comp.attack.value = 0.003;
+      comp.release.value = 0.25;
+      state.audioCompressor = comp;
+      comp.connect(state.audioCtx.destination);
+    }
+    try { state.audioGain.disconnect(); } catch (_) { /* ignore */ }
+    state.audioGain.connect(state.audioCompressor);
+    state.audioGain.gain.value = masterGainValue();
+  }
+
   function primeAudioContext() {
     try {
       const Ctx = window.AudioContext || window.webkitAudioContext;
       if (!Ctx) return;
-      if (!state.audioCtx) {
-        state.audioCtx = new Ctx();
-        state.audioGain = state.audioCtx.createGain();
-        state.audioGain.gain.value = state.settings.volume;
-        state.audioGain.connect(state.audioCtx.destination);
-      }
+      if (!state.audioCtx) state.audioCtx = new Ctx();
+      setupAudioChain();
       void applyOutputToContext(state.audioCtx);
       if (state.audioCtx.state === 'suspended') state.audioCtx.resume().catch(function () {});
     } catch (_) {
@@ -3211,15 +3234,11 @@
   async function ensureAudioContext() {
     const Ctx = window.AudioContext || window.webkitAudioContext;
     if (!Ctx) throw new Error('当前浏览器不支持 Web Audio');
-    if (!state.audioCtx) {
-      state.audioCtx = new Ctx();
-      state.audioGain = state.audioCtx.createGain();
-      state.audioGain.gain.value = state.settings.volume;
-      state.audioGain.connect(state.audioCtx.destination);
-    }
+    if (!state.audioCtx) state.audioCtx = new Ctx();
+    setupAudioChain();
     await applyOutputToContext(state.audioCtx);
     if (state.audioCtx.state === 'suspended') await state.audioCtx.resume();
-    state.audioGain.gain.value = state.settings.volume;
+    state.audioGain.gain.value = masterGainValue();
   }
 
   function formatSigned(value, unit) {
@@ -3229,6 +3248,13 @@
 
   function isRemoteEngine() {
     return ['edge', 'azure', 'volcengine', 'cosyvoice', 'kokoro'].includes(state.settings.engine);
+  }
+
+  function shouldUseBoostedEdge() {
+    return state.settings.volumeBoost !== false
+      && !isRemoteEngine()
+      && Boolean(state.server.edgeTts)
+      && Number(state.settings.volume) >= 0.9;
   }
 
   function remoteEngineReady() {
@@ -3687,7 +3713,7 @@
       await applyOutputToContext(state.replyAudioCtx);
       if (state.replyAudioCtx.state === 'suspended') await state.replyAudioCtx.resume();
       const gain = state.replyAudioCtx.createGain();
-      gain.gain.value = clamp(state.settings.volume, 0, 1);
+      gain.gain.value = masterGainValue();
       gain.connect(state.replyAudioCtx.destination);
 
       const options = ttsOptions();
@@ -3757,7 +3783,7 @@
   }
 
   async function speakPriorityText(text, generation) {
-    if (isRemoteEngine() && remoteEngineReady()) {
+    if ((isRemoteEngine() || shouldUseBoostedEdge()) && remoteEngineReady()) {
       const ok = await speakPriorityEdge(text, generation);
       if (ok) return true;
     }
@@ -3837,11 +3863,19 @@
     await resumeMainAfterPriority();
   }
 
-  function speakChatReply(text) {
+  function speakChatReply(text, meta) {
+    const opts = meta || {};
     const clean = sanitizeBlocked(String(text || '').replace(/\s+/g, ' ').trim());
     if (!clean) return;
+    let spoken = clean;
+    if (opts.type !== 'welcome' && opts.question) {
+      const question = sanitizeBlocked(String(opts.question || '').replace(/\s+/g, ' ').trim())
+        .replace(/[。！？!?，,；;：:\s]+$/g, '')
+        .slice(0, 180);
+      if (question) spoken = '有朋友问：' + question + '。' + clean;
+    }
     if (state.priorityQueue.length >= 5) return;
-    state.priorityQueue.push(clean);
+    state.priorityQueue.push(spoken);
     if (state.priorityActive) return;
     state.priorityActive = true;
     state.priorityGeneration += 1;
@@ -4849,9 +4883,16 @@
       state.settings.volume = Number(els.volumeRange.value) / 100;
       updateVoiceLabels();
       fillRange(els.volumeRange);
-      if (state.audioGain) state.audioGain.gain.value = state.settings.volume;
+      if (state.audioGain) state.audioGain.gain.value = masterGainValue();
       persist();
     });
+    if (els.volumeBoostToggle) {
+      els.volumeBoostToggle.addEventListener('change', function () {
+        state.settings.volumeBoost = els.volumeBoostToggle.checked;
+        if (state.audioGain) state.audioGain.gain.value = masterGainValue();
+        persist();
+      });
+    }
 
     els.queueList.addEventListener('click', function (event) {
       const row = event.target.closest('.queue-item');

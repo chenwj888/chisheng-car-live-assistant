@@ -328,7 +328,9 @@
       state.spokenEvents.add(event.id);
       window.CarLiveVoice.speakChatReply(event.reply, {
         eventId: event.id,
-        nickname: event.nickname
+        nickname: event.nickname,
+        question: event.text,
+        type: event.type
       });
     });
   }

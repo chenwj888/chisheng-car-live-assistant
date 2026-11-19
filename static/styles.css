@@ -3316,3 +3316,20 @@ mark.changed {
 }
 .sfx-track .sfx-icon-btn:hover { color: #ff9a74; }
 .sfx-track .sfx-icon-btn.delete:hover { color: #ff6b6b; }
+
+
+.sound-boost-row {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  margin-top: 5px;
+  color: var(--muted-strong);
+  font-size: 8.5px;
+  cursor: pointer;
+}
+.sound-boost-row input { accent-color: #ff7b4f; }
+.sound-boost-row small {
+  color: var(--dim);
+  font-size: 7.4px;
+  line-height: 1.4;
+}
