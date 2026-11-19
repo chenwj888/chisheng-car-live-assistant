@@ -55,7 +55,7 @@ STATE_FILE = DATA_DIR / "state.json"
 CHAT_FILE = DATA_DIR / "chat.json"
 BLOCKLIST_FILE = DATA_DIR / "blocklist.json"
 BLOCKLIST_BACKUP_FILE = DATA_DIR / "blocklist.backup.json"
-APP_VERSION = "2.18.0"
+APP_VERSION = "2.18.1"
 
 for folder in (CACHE_DIR, LOG_DIR, DATA_DIR, MUSIC_DIR, SFX_DIR):
     folder.mkdir(parents=True, exist_ok=True)
@@ -609,13 +609,18 @@ def normalize_replacements(raw: Any) -> list[dict[str, str]]:
         target = target[:100]
         if not source:
             continue
-        key = source.casefold()
-        if key in seen:
-            continue
-        seen.add(key)
-        replacements.append({"from": source, "to": target})
-        if len(replacements) >= 2000:
-            break
+        variants = [part.strip() for part in re.split(r"[、，,;；]+", source) if part.strip()]
+        if not variants:
+            variants = [source]
+        for variant in variants:
+            variant = variant[:50]
+            key = variant.casefold()
+            if key in seen:
+                continue
+            seen.add(key)
+            replacements.append({"from": variant, "to": target})
+            if len(replacements) >= 2000:
+                return replacements
     return replacements
 
 

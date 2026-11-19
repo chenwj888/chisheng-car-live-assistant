@@ -351,10 +351,14 @@
       from = from.slice(0, 50);
       to = to.slice(0, 100);
       if (!from) return;
-      const key = from.toLowerCase();
-      if (seen.has(key)) return;
-      seen.add(key);
-      replacements.push({ from: from, to: to });
+      const variants = from.split(/[、，,;；]+/).map(function (part) { return part.trim(); }).filter(Boolean);
+      (variants.length ? variants : [from]).forEach(function (variant) {
+        variant = variant.slice(0, 50);
+        const key = variant.toLowerCase();
+        if (seen.has(key)) return;
+        seen.add(key);
+        replacements.push({ from: variant, to: to });
+      });
     });
     return replacements.slice(0, 2000);
   }
