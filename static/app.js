@@ -1306,7 +1306,7 @@
     els.protectedInput.value = state.settings.protectedWords;
     els.rateRange.value = String(state.settings.rate);
     els.pitchRange.value = String(state.settings.pitch);
-    els.volumeRange.value = String(state.settings.volume);
+    els.volumeRange.value = String(Math.round(state.settings.volume * 100));
     els.engineSelect.value = state.settings.engine;
     if (els.azureKeyInput) els.azureKeyInput.value = state.settings.azureKey;
     if (els.azureRegionInput) els.azureRegionInput.value = state.settings.azureRegion;
@@ -1342,7 +1342,7 @@
     });
     updateStrengthUI();
     updateVoiceLabels();
-    [els.rateRange, els.pitchRange, els.volumeRange].forEach(fillRange);
+    [els.rateRange, els.pitchRange, els.volumeRange, els.sfxVolume, els.musicVolume].forEach(fillRange);
   }
 
   function buildModeOptions() {
@@ -4545,6 +4545,7 @@
       els.sfxVolume.addEventListener('input', function () {
         state.settings.sfxVolume = clamp(Number(els.sfxVolume.value) || 0, 0, 100);
         if (els.sfxVolumeVal) els.sfxVolumeVal.textContent = Math.round(state.settings.sfxVolume) + '%';
+        fillRange(els.sfxVolume);
         persist();
       });
     }
@@ -4800,6 +4801,7 @@
       els.musicVolume.addEventListener('input', function () {
         state.settings.musicVolume = clamp(Number(els.musicVolume.value), 0, 100);
         if (els.musicVolumeVal) els.musicVolumeVal.textContent = Math.round(state.settings.musicVolume) + '%';
+        fillRange(els.musicVolume);
         if (state.musicAudio) state.musicAudio.volume = state.settings.musicVolume / 100;
         persist();
       });
