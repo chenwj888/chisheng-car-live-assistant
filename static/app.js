@@ -38,7 +38,8 @@
     sfxEnabled: false,
     sfxMode: 'fixed',
     sfxEvery: 5,
-    sfxTypes: ['cough', 'water', 'throat', 'inhale'],
+    sfxPlayMode: 'sequential',
+    sfxSelected: null,
     sfxVolume: 35,
     autoKokoro: true,
     multiOrder: 'preset',
@@ -123,6 +124,11 @@
     kokoroAttempts: 0,
     sfxCount: 0,
     sfxThreshold: 0,
+    sfxTracks: [],
+    sfxAudioCache: new Map(),
+    sfxIndex: 0,
+    sfxLastId: '',
+    sfxUploading: false,
     serverRetryTimer: null,
     serverRetryCount: 0,
     musicTracks: [],
@@ -197,7 +203,8 @@
       'pitchVal', 'volumeRange', 'volumeVal', 'voiceTipText',
       'outputSelect', 'refreshOutputBtn', 'outputHint', 'packBtn', 'packState', 'autoKokoroToggle',
       'multiModels', 'multiAllBtn', 'multiClearBtn', 'multiBuildBtn', 'multiIntroToggle', 'multiPanel', 'multiGeneralText',
-      'sfxToggle', 'sfxBody', 'sfxMode', 'sfxEvery', 'sfxVolume', 'sfxVolumeVal', 'sfxTestBtn', 'sfxState',
+      'sfxToggle', 'sfxBody', 'sfxMode', 'sfxEvery', 'sfxPlayMode', 'sfxVolume', 'sfxVolumeVal', 'sfxTestBtn', 'sfxState',
+      'sfxCount', 'sfxUploadBtn', 'sfxFileInput', 'sfxList', 'sfxUploadState',
       'singleIntroToggle', 'singleIntroText',
       'blockedWordsInput', 'blockedSaveBtn', 'blockedUploadBtn', 'blockedFileInput', 'blockedState', 'blockedBtnCount',
       'blockedExportWordsBtn', 'blockedExportReplacementsBtn', 'blockedImportReplacementsBtn', 'blockedReplacementsFileInput',
@@ -929,7 +936,8 @@
     next.sfxEnabled = next.sfxEnabled === true;
     next.sfxMode = next.sfxMode === 'random' ? 'random' : 'fixed';
     next.sfxEvery = clamp(Number(next.sfxEvery) || 5, 2, 30);
-    next.sfxTypes = Array.isArray(next.sfxTypes) ? next.sfxTypes.filter(function (type) { return ['cough', 'water', 'throat', 'inhale'].includes(type); }) : ['cough', 'water', 'throat', 'inhale'];
+    next.sfxPlayMode = next.sfxPlayMode === 'random' ? 'random' : 'sequential';
+    next.sfxSelected = Array.isArray(next.sfxSelected) ? next.sfxSelected.filter(function (id) { return typeof id === 'string'; }) : null;
     next.sfxVolume = clamp(Number(next.sfxVolume == null ? 35 : next.sfxVolume), 0, 100);
     next.autoKokoro = next.autoKokoro !== false;
     if (['edge', 'azure', 'volcengine', 'cosyvoice'].includes(next.engine)) next.autoKokoro = false;
@@ -1017,15 +1025,274 @@
     els.volumeVal.textContent = Math.round(state.settings.volume * 100) + '%';
   }
 
+  function sfxSelectedIds() {
+    const selected = state.settings.sfxSelected;
+    if (selected === null) return state.sfxTracks.map(function (track) { return track.id; });
+    return selected;
+  }
+
+  function selectedSfxTracks() {
+    const selected = sfxSelectedIds();
+    return state.sfxTracks.filter(function (track) { return selected.includes(track.id); });
+  }
+
   function updateSfxUI() {
     if (els.sfxBody) els.sfxBody.hidden = !state.settings.sfxEnabled;
-    if (els.sfxState) {
-      els.sfxState.textContent = state.settings.sfxEnabled
-        ? (state.settings.sfxMode === 'random'
-          ? '随机 · 2–' + state.settings.sfxEvery + ' 句'
-          : '每 ' + state.settings.sfxEvery + ' 句')
-        : '关闭';
+    const selected = selectedSfxTracks();
+    if (els.sfxCount) els.sfxCount.textContent = selected.length + ' 个';
+    if (els.sfxUploadState) {
+      els.sfxUploadState.textContent = state.sfxUploading
+        ? '正在上传…'
+        : '支持 MP3 / WAV / OGG，单个 ≤ 20MB';
     }
+    if (els.sfxState) {
+      if (!state.settings.sfxEnabled) {
+        els.sfxState.textContent = '关闭';
+      } else if (!selected.length) {
+        els.sfxState.textContent = '未选择音效';
+      } else {
+        const interval = state.settings.sfxMode === 'random'
+          ? '随机 · 2–' + state.settings.sfxEvery + ' 句'
+          : '每 ' + state.settings.sfxEvery + ' 句';
+        const order = state.settings.sfxPlayMode === 'random' ? '随机播放' : '顺序播放';
+        els.sfxState.textContent = interval + ' · ' + order;
+      }
+    }
+  }
+
+  function renderSfxList() {
+    if (!els.sfxList) return;
+    els.sfxList.textContent = '';
+    if (!state.sfxTracks.length) {
+      const empty = document.createElement('div');
+      empty.className = 'sfx-empty';
+      empty.textContent = '还没有上传音效，点“上传音效”添加。';
+      els.sfxList.appendChild(empty);
+      return;
+    }
+    const selected = sfxSelectedIds();
+    state.sfxTracks.forEach(function (track, index) {
+      const row = document.createElement('div');
+      row.className = 'sfx-track';
+
+      const checkbox = document.createElement('input');
+      checkbox.type = 'checkbox';
+      checkbox.checked = selected.includes(track.id);
+      checkbox.title = '参与播放';
+      checkbox.addEventListener('change', function () {
+        let next;
+        if (state.settings.sfxSelected === null) {
+          next = state.sfxTracks.map(function (item) { return item.id; });
+        } else {
+          next = state.settings.sfxSelected.slice();
+        }
+        if (checkbox.checked) {
+          if (!next.includes(track.id)) next.push(track.id);
+        } else {
+          next = next.filter(function (id) { return id !== track.id; });
+        }
+        state.settings.sfxSelected = next;
+        resetSfxCounter();
+        updateSfxUI();
+        persist();
+      });
+
+      const name = document.createElement('span');
+      name.className = 'sfx-name';
+      name.textContent = track.name || track.id;
+      name.title = track.name || track.id;
+
+      const size = document.createElement('span');
+      size.className = 'sfx-size';
+      size.textContent = (Number(track.size || 0) / 1024 / 1024).toFixed(1) + 'MB';
+
+      const up = document.createElement('button');
+      up.type = 'button';
+      up.className = 'sfx-icon-btn';
+      up.textContent = '↑';
+      up.title = '上移';
+      up.disabled = index === 0;
+      up.addEventListener('click', function () { moveSfx(track.id, -1); });
+
+      const down = document.createElement('button');
+      down.type = 'button';
+      down.className = 'sfx-icon-btn';
+      down.textContent = '↓';
+      down.title = '下移';
+      down.disabled = index === state.sfxTracks.length - 1;
+      down.addEventListener('click', function () { moveSfx(track.id, 1); });
+
+      const del = document.createElement('button');
+      del.type = 'button';
+      del.className = 'sfx-icon-btn delete';
+      del.textContent = '删除';
+      del.title = '删除音效';
+      del.addEventListener('click', function () { deleteSfx(track.id); });
+
+      row.appendChild(checkbox);
+      row.appendChild(name);
+      row.appendChild(size);
+      row.appendChild(up);
+      row.appendChild(down);
+      row.appendChild(del);
+      els.sfxList.appendChild(row);
+    });
+  }
+
+  async function loadSfxTracks() {
+    try {
+      const response = await fetch('/api/sfx/list', { cache: 'no-store' });
+      if (!response.ok) return;
+      const data = await response.json();
+      state.sfxTracks = Array.isArray(data.tracks) ? data.tracks : [];
+      if (Array.isArray(state.settings.sfxSelected)) {
+        const ids = new Set(state.sfxTracks.map(function (track) { return track.id; }));
+        state.settings.sfxSelected = state.settings.sfxSelected.filter(function (id) { return ids.has(id); });
+      }
+      updateSfxUI();
+      renderSfxList();
+    } catch (_) { /* offline */ }
+  }
+
+  async function uploadSfxFiles(files) {
+    const list = Array.prototype.slice.call(files || []);
+    if (!list.length || state.sfxUploading) return;
+    const allowed = /\.(mp3|m4a|aac|wav|ogg|opus|flac|webm)$/i;
+    const valid = list.filter(function (file) { return allowed.test(file.name) && file.size <= 20 * 1024 * 1024; });
+    if (!valid.length) {
+      toast('请选择 20MB 以内的 MP3 / WAV / OGG 音效。', 'error', 4200);
+      return;
+    }
+    if (valid.length < list.length) toast('已跳过格式不支持或超过 20MB 的文件。', '', 3200);
+    state.sfxUploading = true;
+    updateSfxUI();
+    let done = 0;
+    try {
+      for (const file of valid) {
+        const response = await fetch('/api/sfx/upload?name=' + encodeURIComponent(file.name), {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/octet-stream' },
+          body: file
+        });
+        if (!response.ok) {
+          let message = '音效上传失败';
+          try {
+            const data = await response.json();
+            if (data && data.message) message = data.message;
+          } catch (_) { /* ignore */ }
+          throw new Error(message);
+        }
+        const data = await response.json();
+        const track = data && data.track;
+        if (track && track.id) {
+          if (Array.isArray(state.settings.sfxSelected) && !state.settings.sfxSelected.includes(track.id)) {
+            state.settings.sfxSelected.push(track.id);
+          }
+          done += 1;
+        }
+      }
+      await loadSfxTracks();
+      persist();
+      toast('已上传 ' + done + ' 个音效。', 'success', 3200);
+    } catch (err) {
+      toast(err.message || '音效上传失败，请检查文件。', 'error', 4200);
+    } finally {
+      state.sfxUploading = false;
+      updateSfxUI();
+    }
+  }
+
+  async function deleteSfx(id) {
+    if (!id) return;
+    if (!window.confirm('删除这个音效文件？')) return;
+    try {
+      const response = await fetch('/api/sfx/delete', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ id: id })
+      });
+      if (!response.ok) throw new Error('delete failed');
+      state.sfxAudioCache.delete(id);
+      if (Array.isArray(state.settings.sfxSelected)) {
+        state.settings.sfxSelected = state.settings.sfxSelected.filter(function (item) { return item !== id; });
+      }
+      await loadSfxTracks();
+      persist();
+      toast('已删除音效。', '', 2200);
+    } catch (_) {
+      toast('删除失败，请稍后重试。', 'error');
+    }
+  }
+
+  async function moveSfx(id, delta) {
+    const index = state.sfxTracks.findIndex(function (track) { return track.id === id; });
+    const target = index + delta;
+    if (index < 0 || target < 0 || target >= state.sfxTracks.length) return;
+    const ids = state.sfxTracks.map(function (track) { return track.id; });
+    const temp = ids[index];
+    ids[index] = ids[target];
+    ids[target] = temp;
+    try {
+      const response = await fetch('/api/sfx/order', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ ids: ids })
+      });
+      if (!response.ok) throw new Error('order failed');
+      await loadSfxTracks();
+    } catch (_) {
+      toast('调整顺序失败，请稍后重试。', 'error');
+    }
+  }
+
+  async function playSfxTrack(track) {
+    if (!track || !track.id) return;
+    if (!state.audioCtx || !state.audioGain) {
+      try { await ensureAudioContext(); } catch (_) { return; }
+    }
+    if (!state.audioCtx || !state.audioGain) return;
+    const ctx = state.audioCtx;
+    if (ctx.state === 'suspended') {
+      try { await ctx.resume(); } catch (_) { return; }
+    }
+    try {
+      let buffer = state.sfxAudioCache.get(track.id);
+      if (!buffer) {
+        const response = await fetch('/api/sfx/file/' + encodeURIComponent(track.id), { cache: 'no-store' });
+        if (!response.ok) throw new Error('load failed');
+        const bytes = await response.arrayBuffer();
+        buffer = await ctx.decodeAudioData(bytes.slice(0));
+        state.sfxAudioCache.set(track.id, buffer);
+        if (state.sfxAudioCache.size > 24) {
+          const first = state.sfxAudioCache.keys().next().value;
+          state.sfxAudioCache.delete(first);
+        }
+      }
+      if (!buffer) return;
+      const source = ctx.createBufferSource();
+      const gain = ctx.createGain();
+      source.buffer = buffer;
+      gain.gain.value = clamp(Number(state.settings.sfxVolume) / 100, 0, 1);
+      source.connect(gain);
+      gain.connect(state.audioGain);
+      await new Promise(function (resolve) {
+        let settled = false;
+        const finish = function () {
+          if (settled) return;
+          settled = true;
+          try { source.disconnect(); } catch (_) { /* ignore */ }
+          try { gain.disconnect(); } catch (_) { /* ignore */ }
+          resolve();
+        };
+        source.onended = finish;
+        try {
+          source.start(0);
+          setTimeout(finish, Math.max(800, (buffer.duration || 0.5) * 1000 + 500));
+        } catch (_) {
+          finish();
+        }
+      });
+    } catch (_) { /* skip failed sound */ }
   }
 
   function applySettingsToUI() {
@@ -1064,13 +1331,12 @@
     if (els.sfxToggle) els.sfxToggle.checked = state.settings.sfxEnabled;
     if (els.sfxBody) els.sfxBody.hidden = !state.settings.sfxEnabled;
     if (els.sfxMode) els.sfxMode.value = state.settings.sfxMode;
+    if (els.sfxPlayMode) els.sfxPlayMode.value = state.settings.sfxPlayMode;
     if (els.sfxEvery) els.sfxEvery.value = String(state.settings.sfxEvery);
     if (els.sfxVolume) els.sfxVolume.value = String(state.settings.sfxVolume);
     if (els.sfxVolumeVal) els.sfxVolumeVal.textContent = Math.round(state.settings.sfxVolume) + '%';
-    document.querySelectorAll('[data-sfx-type]').forEach(function (input) {
-      input.checked = state.settings.sfxTypes.includes(input.getAttribute('data-sfx-type'));
-    });
     updateSfxUI();
+    renderSfxList();
     document.querySelectorAll('input[name="multiOrder"]').forEach(function (radio) {
       radio.checked = radio.value === state.settings.multiOrder;
     });
@@ -2036,13 +2302,12 @@
     if (els.sfxToggle) els.sfxToggle.checked = state.settings.sfxEnabled;
     if (els.sfxBody) els.sfxBody.hidden = !state.settings.sfxEnabled;
     if (els.sfxMode) els.sfxMode.value = state.settings.sfxMode;
+    if (els.sfxPlayMode) els.sfxPlayMode.value = state.settings.sfxPlayMode;
     if (els.sfxEvery) els.sfxEvery.value = String(state.settings.sfxEvery);
     if (els.sfxVolume) els.sfxVolume.value = String(state.settings.sfxVolume);
     if (els.sfxVolumeVal) els.sfxVolumeVal.textContent = Math.round(state.settings.sfxVolume) + '%';
-    document.querySelectorAll('[data-sfx-type]').forEach(function (input) {
-      input.checked = state.settings.sfxTypes.includes(input.getAttribute('data-sfx-type'));
-    });
     updateSfxUI();
+    renderSfxList();
     document.querySelectorAll('input[name="multiOrder"]').forEach(function (radio) {
       radio.checked = radio.value === state.settings.multiOrder;
     });
@@ -2811,142 +3076,38 @@
     return every;
   }
 
-  function takeSfxType(isLast) {
+  function takeSfxTrack(isLast) {
     if (isLast || !state.settings.sfxEnabled || Number(state.settings.sfxVolume) <= 0) return null;
     const item = state.queue[state.current];
     if (!item || item.kind !== 'model') return null;
-    const types = (state.settings.sfxTypes || []).filter(function (type) {
-      return ['cough', 'water', 'throat', 'inhale'].includes(type);
-    });
-    if (!types.length) return null;
+    const tracks = selectedSfxTracks();
+    if (!tracks.length) return null;
     if (!state.sfxThreshold) state.sfxThreshold = nextSfxThreshold();
     state.sfxCount += 1;
     if (state.sfxCount < state.sfxThreshold) return null;
     state.sfxCount = 0;
     state.sfxThreshold = nextSfxThreshold();
-    return types[Math.floor(Math.random() * types.length)];
-  }
 
-  function makeSfxNoise(ctx, seconds) {
-    const buffer = ctx.createBuffer(1, Math.max(1, Math.floor(ctx.sampleRate * seconds)), ctx.sampleRate);
-    const data = buffer.getChannelData(0);
-    for (let i = 0; i < data.length; i += 1) data[i] = Math.random() * 2 - 1;
-    return buffer;
-  }
-
-  async function playSynthSfx(type) {
-    if (!state.audioCtx || !state.audioGain) {
-      try { await ensureAudioContext(); } catch (_) { return; }
-    }
-    if (!state.audioCtx || !state.audioGain) return;
-    const ctx = state.audioCtx;
-    if (ctx.state === 'suspended') {
-      try { await ctx.resume(); } catch (_) { return; }
-    }
-    const now = ctx.currentTime + 0.025;
-    const master = ctx.createGain();
-    const level = Math.pow(clamp(Number(state.settings.sfxVolume) / 100, 0, 1), 0.9) * 0.55;
-    if (level <= 0) return;
-    master.gain.value = level;
-    master.connect(state.audioGain);
-
-    let duration = 0.45;
-    try {
-      if (type === 'water') {
-        duration = 0.5;
-        for (let i = 0; i < 3; i += 1) {
-          const start = now + i * 0.115;
-          const osc = ctx.createOscillator();
-          const env = ctx.createGain();
-          const tone = 760 - i * 120;
-          osc.type = 'sine';
-          osc.frequency.setValueAtTime(tone, start);
-          osc.frequency.exponentialRampToValueAtTime(Math.max(120, tone * 0.45), start + 0.16);
-          env.gain.setValueAtTime(0.0001, start);
-          env.gain.exponentialRampToValueAtTime(0.7, start + 0.012);
-          env.gain.exponentialRampToValueAtTime(0.0001, start + 0.2);
-          osc.connect(env);
-          env.connect(master);
-          osc.start(start);
-          osc.stop(start + 0.23);
-        }
-      } else if (type === 'inhale') {
-        duration = 0.68;
-        const src = ctx.createBufferSource();
-        const filter = ctx.createBiquadFilter();
-        const env = ctx.createGain();
-        src.buffer = makeSfxNoise(ctx, 0.72);
-        filter.type = 'bandpass';
-        filter.frequency.setValueAtTime(720, now);
-        filter.frequency.linearRampToValueAtTime(1300, now + 0.55);
-        filter.Q.value = 0.8;
-        env.gain.setValueAtTime(0.0001, now);
-        env.gain.linearRampToValueAtTime(0.42, now + 0.24);
-        env.gain.linearRampToValueAtTime(0.0001, now + 0.64);
-        src.connect(filter);
-        filter.connect(env);
-        env.connect(master);
-        src.start(now);
-        src.stop(now + 0.7);
-      } else if (type === 'throat') {
-        duration = 0.38;
-        const src = ctx.createBufferSource();
-        const filter = ctx.createBiquadFilter();
-        const env = ctx.createGain();
-        src.buffer = makeSfxNoise(ctx, 0.4);
-        filter.type = 'lowpass';
-        filter.frequency.value = 420;
-        env.gain.setValueAtTime(0.0001, now);
-        env.gain.exponentialRampToValueAtTime(0.5, now + 0.025);
-        env.gain.exponentialRampToValueAtTime(0.0001, now + 0.34);
-        src.connect(filter);
-        filter.connect(env);
-        env.connect(master);
-        src.start(now);
-        src.stop(now + 0.38);
-        const hum = ctx.createOscillator();
-        const humGain = ctx.createGain();
-        hum.type = 'sine';
-        hum.frequency.value = 145;
-        humGain.gain.setValueAtTime(0.0001, now);
-        humGain.gain.exponentialRampToValueAtTime(0.16, now + 0.03);
-        humGain.gain.exponentialRampToValueAtTime(0.0001, now + 0.3);
-        hum.connect(humGain);
-        humGain.connect(master);
-        hum.start(now);
-        hum.stop(now + 0.32);
-      } else {
-        duration = 0.48;
-        const src = ctx.createBufferSource();
-        const filter = ctx.createBiquadFilter();
-        const env = ctx.createGain();
-        src.buffer = makeSfxNoise(ctx, 0.5);
-        filter.type = 'bandpass';
-        filter.frequency.value = 820;
-        filter.Q.value = 0.7;
-        env.gain.setValueAtTime(0.0001, now);
-        for (let i = 0; i < 3; i += 1) {
-          const start = now + i * 0.12;
-          env.gain.setValueAtTime(0.0001, start);
-          env.gain.linearRampToValueAtTime(0.48, start + 0.012);
-          env.gain.exponentialRampToValueAtTime(0.0001, start + 0.1);
-        }
-        src.connect(filter);
-        filter.connect(env);
-        env.connect(master);
-        src.start(now);
-        src.stop(now + 0.5);
+    if (state.settings.sfxPlayMode === 'random') {
+      let index = Math.floor(Math.random() * tracks.length);
+      if (tracks.length > 1 && tracks[index].id === state.sfxLastId) {
+        index = (index + 1) % tracks.length;
       }
-    } catch (_) {
-      return;
+      state.sfxLastId = tracks[index].id;
+      return tracks[index];
     }
-    await new Promise(function (resolve) { setTimeout(resolve, duration * 1000 + 60); });
+
+    if (state.sfxIndex >= tracks.length) state.sfxIndex = 0;
+    const track = tracks[state.sfxIndex];
+    state.sfxIndex = (state.sfxIndex + 1) % tracks.length;
+    state.sfxLastId = track.id;
+    return track;
   }
 
   function scheduleAdvance(run) {
     const length = state.queue.length;
     const isLast = state.current + 1 >= length;
-    const effect = takeSfxType(isLast);
+    const effect = takeSfxTrack(isLast);
     const proceed = function () {
       if (run !== state.runId || !state.playing || state.paused) return;
       state.inGap = true;
@@ -2965,7 +3126,7 @@
     };
     if (effect) {
       state.inGap = true;
-      void playSynthSfx(effect).finally(proceed);
+      void playSfxTrack(effect).finally(proceed);
     } else {
       proceed();
     }
@@ -4362,6 +4523,15 @@
         persist();
       });
     }
+    if (els.sfxPlayMode) {
+      els.sfxPlayMode.addEventListener('change', function () {
+        state.settings.sfxPlayMode = els.sfxPlayMode.value === 'random' ? 'random' : 'sequential';
+        state.sfxIndex = 0;
+        resetSfxCounter();
+        updateSfxUI();
+        persist();
+      });
+    }
     if (els.sfxEvery) {
       els.sfxEvery.addEventListener('change', function () {
         state.settings.sfxEvery = clamp(Number(els.sfxEvery.value) || 5, 2, 30);
@@ -4371,21 +4541,6 @@
         persist();
       });
     }
-    document.querySelectorAll('[data-sfx-type]').forEach(function (input) {
-      input.addEventListener('change', function () {
-        const enabled = [...document.querySelectorAll('[data-sfx-type]')]
-          .filter(function (node) { return node.checked; })
-          .map(function (node) { return node.getAttribute('data-sfx-type'); });
-        if (!enabled.length) {
-          input.checked = true;
-          toast('至少保留一种生活音效。', 'error', 2600);
-          return;
-        }
-        state.settings.sfxTypes = enabled;
-        resetSfxCounter();
-        persist();
-      });
-    });
     if (els.sfxVolume) {
       els.sfxVolume.addEventListener('input', function () {
         state.settings.sfxVolume = clamp(Number(els.sfxVolume.value) || 0, 0, 100);
@@ -4393,11 +4548,22 @@
         persist();
       });
     }
+    if (els.sfxUploadBtn && els.sfxFileInput) {
+      els.sfxUploadBtn.addEventListener('click', function () { els.sfxFileInput.click(); });
+      els.sfxFileInput.addEventListener('change', function () {
+        uploadSfxFiles(els.sfxFileInput.files);
+        els.sfxFileInput.value = '';
+      });
+    }
     if (els.sfxTestBtn) {
       els.sfxTestBtn.addEventListener('click', function () {
-        const types = state.settings.sfxTypes.length ? state.settings.sfxTypes : ['cough'];
-        const type = types[Math.floor(Math.random() * types.length)];
-        void playSynthSfx(type);
+        const tracks = selectedSfxTracks();
+        if (!tracks.length) {
+          toast('请先上传并勾选至少一个音效。', 'error', 3200);
+          return;
+        }
+        const track = tracks[Math.floor(Math.random() * tracks.length)];
+        void playSfxTrack(track);
       });
     }
     document.querySelectorAll('input[name="multiOrder"]').forEach(function (radio) {
@@ -4844,6 +5010,7 @@
     updateEngineUI();
     loadOutputDevices(false);
     loadMusicTracks();
+    loadSfxTracks();
     checkServer();
     persist(true, { server: false });
     state.clockTimer = setInterval(function () {

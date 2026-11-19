@@ -45,15 +45,19 @@ MUSIC_DIR = BASE_DIR / "music"
 MUSIC_INDEX = MUSIC_DIR / "index.json"
 MUSIC_LOCK = threading.Lock()
 MUSIC_MAX_BYTES = 80 * 1024 * 1024
+SFX_DIR = BASE_DIR / "sfx"
+SFX_INDEX = SFX_DIR / "index.json"
+SFX_LOCK = threading.Lock()
+SFX_MAX_BYTES = 20 * 1024 * 1024
 VENDOR_DIR = BASE_DIR / "vendor"
 RUNTIME_FILE = BASE_DIR / "runtime.json"
 STATE_FILE = DATA_DIR / "state.json"
 CHAT_FILE = DATA_DIR / "chat.json"
 BLOCKLIST_FILE = DATA_DIR / "blocklist.json"
 BLOCKLIST_BACKUP_FILE = DATA_DIR / "blocklist.backup.json"
-APP_VERSION = "2.16.0"
+APP_VERSION = "2.17.0"
 
-for folder in (CACHE_DIR, LOG_DIR, DATA_DIR, MUSIC_DIR):
+for folder in (CACHE_DIR, LOG_DIR, DATA_DIR, MUSIC_DIR, SFX_DIR):
     folder.mkdir(parents=True, exist_ok=True)
 
 try:
@@ -455,6 +459,40 @@ def save_music_tracks(tracks: list[dict[str, Any]]) -> None:
     temp = MUSIC_INDEX.with_suffix(".tmp")
     temp.write_text(json.dumps({"tracks": tracks}, ensure_ascii=False, indent=2), encoding="utf-8")
     os.replace(temp, MUSIC_INDEX)
+
+
+def load_sfx_tracks() -> list[dict[str, Any]]:
+    try:
+        raw = json.loads(SFX_INDEX.read_text(encoding="utf-8"))
+    except Exception:
+        return []
+    tracks: list[dict[str, Any]] = []
+    if isinstance(raw, dict):
+        raw = raw.get("tracks")
+    if not isinstance(raw, list):
+        return []
+    for item in raw:
+        if not isinstance(item, dict):
+            continue
+        track_id = str(item.get("id") or "")
+        if not MUSIC_ID_RE.match(track_id):
+            continue
+        path = SFX_DIR / track_id
+        if not path.exists():
+            continue
+        tracks.append({
+            "id": track_id,
+            "name": str(item.get("name") or track_id)[:160],
+            "size": path.stat().st_size,
+            "addedAt": int(item.get("addedAt") or 0),
+        })
+    return tracks
+
+
+def save_sfx_tracks(tracks: list[dict[str, Any]]) -> None:
+    temp = SFX_INDEX.with_suffix(".tmp")
+    temp.write_text(json.dumps({"tracks": tracks}, ensure_ascii=False, indent=2), encoding="utf-8")
+    os.replace(temp, SFX_INDEX)
 
 
 def get_edge_voice_list(force: bool = False) -> tuple[list[dict[str, Any]], str]:
@@ -1046,6 +1084,39 @@ class AppHandler(BaseHTTPRequestHandler):
             })
             return
 
+        if path == "/api/sfx/list":
+            with SFX_LOCK:
+                tracks = load_sfx_tracks()
+            json_response(self, 200, {
+                "ok": True,
+                "tracks": tracks,
+                "maxUploadMB": 20,
+            })
+            return
+
+        if path.startswith("/api/sfx/file/"):
+            track_id = unquote(path.rsplit("/", 1)[-1])
+            if not MUSIC_ID_RE.match(track_id):
+                json_response(self, 404, {"error": "not_found", "message": "音效文件不存在"})
+                return
+            file_path = SFX_DIR / track_id
+            if not file_path.exists():
+                json_response(self, 404, {"error": "not_found", "message": "音效文件不存在"})
+                return
+            data = file_path.read_bytes()
+            mime = MUSIC_MIME.get(file_path.suffix.lower(), "application/octet-stream")
+            self.send_response(200)
+            self.send_header("Content-Type", mime)
+            self.send_header("Content-Length", str(len(data)))
+            self.send_header("Cache-Control", "no-store")
+            self.send_header("Accept-Ranges", "none")
+            self.end_headers()
+            try:
+                self.wfile.write(data)
+            except (BrokenPipeError, ConnectionAbortedError, ConnectionResetError):
+                pass
+            return
+
         if path == "/api/music/list":
             with MUSIC_LOCK:
                 tracks = load_music_tracks()
@@ -1376,6 +1447,102 @@ class AppHandler(BaseHTTPRequestHandler):
                 for track in load_music_tracks():
                     (MUSIC_DIR / str(track.get("id"))).unlink(missing_ok=True)
                 save_music_tracks([])
+            json_response(self, 200, {"ok": True, "tracks": []})
+            return
+
+        if parsed.path == "/api/sfx/upload":
+            length = int(self.headers.get("Content-Length") or 0)
+            if length <= 0:
+                json_response(self, 400, {"error": "empty_file", "message": "音效文件为空"})
+                return
+            if length > SFX_MAX_BYTES:
+                self.close_connection = True
+                json_response(self, 413, {"error": "file_too_large", "message": "单个音效文件不能超过 20MB"})
+                return
+            query = parse_qs(parsed.query)
+            raw_name = str((query.get("name") or [""])[0] or "")
+            safe_name = re.sub(r'[\x00-\x1f<>:"/\\|?*]', "_", Path(unquote(raw_name)).name).strip()[:120]
+            ext = Path(safe_name).suffix.lower()
+            if ext not in MUSIC_MIME:
+                json_response(self, 400, {
+                    "error": "bad_audio_type",
+                    "message": "只支持 MP3 / M4A / AAC / WAV / OGG / FLAC / WEBM 音频",
+                })
+                return
+            data = self.rfile.read(length)
+            if not data:
+                json_response(self, 400, {"error": "empty_file", "message": "音效文件为空"})
+                return
+            track_id = hashlib.sha1(data).hexdigest()[:16] + ext
+            file_path = SFX_DIR / track_id
+            with SFX_LOCK:
+                tracks = load_sfx_tracks()
+                existing = next((track for track in tracks if track.get("id") == track_id), None)
+                if existing is None:
+                    temp = SFX_DIR / (track_id + ".part")
+                    temp.write_bytes(data)
+                    os.replace(temp, file_path)
+                    existing = {
+                        "id": track_id,
+                        "name": safe_name,
+                        "size": len(data),
+                        "addedAt": int(time.time()),
+                    }
+                    tracks.append(existing)
+                    save_sfx_tracks(tracks)
+            json_response(self, 200, {"ok": True, "track": existing})
+            return
+
+        if parsed.path == "/api/sfx/delete":
+            length = int(self.headers.get("Content-Length") or 0)
+            if length <= 0 or length > 20_000:
+                json_response(self, 400, {"error": "bad_request", "message": "请求内容为空或过大"})
+                return
+            try:
+                payload = json.loads(self.rfile.read(length).decode("utf-8"))
+            except Exception:
+                json_response(self, 400, {"error": "bad_json", "message": "请求格式不正确"})
+                return
+            track_id = str(payload.get("id") or "")
+            if not MUSIC_ID_RE.match(track_id):
+                json_response(self, 400, {"error": "bad_track", "message": "音效文件标识不正确"})
+                return
+            with SFX_LOCK:
+                tracks = [track for track in load_sfx_tracks() if track.get("id") != track_id]
+                (SFX_DIR / track_id).unlink(missing_ok=True)
+                save_sfx_tracks(tracks)
+            json_response(self, 200, {"ok": True, "tracks": tracks})
+            return
+
+        if parsed.path == "/api/sfx/order":
+            length = int(self.headers.get("Content-Length") or 0)
+            if length <= 0 or length > 20_000:
+                json_response(self, 400, {"error": "bad_request", "message": "请求内容为空或过大"})
+                return
+            try:
+                payload = json.loads(self.rfile.read(length).decode("utf-8"))
+            except Exception:
+                json_response(self, 400, {"error": "bad_json", "message": "请求格式不正确"})
+                return
+            ids = payload.get("ids") if isinstance(payload, dict) else None
+            if not isinstance(ids, list):
+                json_response(self, 400, {"error": "bad_order", "message": "音效顺序格式不正确"})
+                return
+            clean_ids = [str(item) for item in ids if MUSIC_ID_RE.match(str(item))]
+            with SFX_LOCK:
+                tracks = load_sfx_tracks()
+                by_id = {track["id"]: track for track in tracks}
+                ordered = [by_id[item] for item in clean_ids if item in by_id]
+                ordered += [track for track in tracks if track["id"] not in clean_ids]
+                save_sfx_tracks(ordered)
+            json_response(self, 200, {"ok": True, "tracks": ordered})
+            return
+
+        if parsed.path == "/api/sfx/clear":
+            with SFX_LOCK:
+                for track in load_sfx_tracks():
+                    (SFX_DIR / str(track.get("id"))).unlink(missing_ok=True)
+                save_sfx_tracks([])
             json_response(self, 200, {"ok": True, "tracks": []})
             return
 

@@ -844,3 +844,12 @@ body.light .sfx-types .sfx-label,
 body.light .sfx-actions #sfxState,
 body.light .sfx-body > small { color: #8e99a2; }
 body.light .sfx-types label { color: #5f6b74; }
+
+
+body.light .sfx-list {
+  border-color: #eee5da;
+  background: #fbf8f3;
+}
+body.light .sfx-track { background: #fffdf9; }
+body.light .sfx-track .sfx-name { color: #5f6b74; }
+body.light .sfx-count { color: #5f6b74; }

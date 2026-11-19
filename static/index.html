@@ -662,7 +662,7 @@
             <div class="sfx-body" id="sfxBody" hidden>
               <div class="sfx-row">
                 <label class="field">
-                  <span>插入方式</span>
+                  <span>插入间隔</span>
                   <select id="sfxMode">
                     <option value="fixed">固定间隔</option>
                     <option value="random">随机间隔</option>
@@ -673,22 +673,39 @@
                   <input type="number" id="sfxEvery" min="2" max="30" step="1" value="5">
                 </label>
               </div>
-              <div class="sfx-types">
-                <span class="sfx-label">音效类型</span>
-                <label><input type="checkbox" data-sfx-type="cough" checked> 轻咳</label>
-                <label><input type="checkbox" data-sfx-type="water" checked> 喝水</label>
-                <label><input type="checkbox" data-sfx-type="throat" checked> 清嗓子</label>
-                <label><input type="checkbox" data-sfx-type="inhale" checked> 吸气</label>
+              <div class="sfx-row">
+                <label class="field">
+                  <span>音效播放顺序</span>
+                  <select id="sfxPlayMode">
+                    <option value="sequential">顺序播放</option>
+                    <option value="random">随机播放</option>
+                  </select>
+                </label>
+                <label class="field">
+                  <span>已选音效</span>
+                  <span class="sfx-count" id="sfxCount">0 个</span>
+                </label>
               </div>
+
+              <div class="sfx-upload-row">
+                <button class="btn small" id="sfxUploadBtn" type="button">上传音效</button>
+                <input type="file" id="sfxFileInput" accept=".mp3,.m4a,.aac,.wav,.ogg,.opus,.flac,.webm,audio/*" multiple hidden>
+                <span id="sfxUploadState">支持 MP3 / WAV / OGG，单个 ≤ 20MB</span>
+              </div>
+
+              <div class="sfx-list" id="sfxList">
+                <div class="sfx-empty">还没有上传音效，点“上传音效”添加。</div>
+              </div>
+
               <div class="sfx-volume">
                 <div class="slider-head"><span>音效音量</span><b id="sfxVolumeVal">35%</b></div>
                 <input type="range" id="sfxVolume" min="0" max="100" step="5" value="35">
               </div>
               <div class="sfx-actions">
-                <button class="btn small" id="sfxTestBtn" type="button">试听一次</button>
+                <button class="btn small" id="sfxTestBtn" type="button">试听选中项</button>
                 <span id="sfxState">关闭</span>
               </div>
-              <small>每读完设定句数，插入一次轻声生活音效，再继续下一句。音效由程序合成，不是真人录音。</small>
+              <small>上传后可勾选参与播放的音效，用 ↑ ↓ 调整顺序；每读完设定句数，按顺序或随机播放一个音效，再继续下一句。最后一句不插入。</small>
             </div>
           </section>
 

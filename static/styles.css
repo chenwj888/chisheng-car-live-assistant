@@ -3236,3 +3236,83 @@ mark.changed {
   font-size: 7.6px;
   line-height: 1.5;
 }
+
+
+.sfx-count {
+  display: inline-block;
+  padding: 5px 0;
+  color: var(--muted-strong);
+  font-size: 9px;
+}
+.sfx-upload-row {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  margin: 7px 0;
+  flex-wrap: wrap;
+}
+.sfx-upload-row #sfxUploadState {
+  color: var(--dim);
+  font-size: 7.6px;
+  line-height: 1.4;
+}
+.sfx-list {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  max-height: 150px;
+  overflow-y: auto;
+  margin: 6px 0;
+  padding: 4px;
+  border: 1px solid var(--line);
+  border-radius: 7px;
+  background: var(--surface-2);
+  scrollbar-width: thin;
+  scrollbar-color: rgba(255, 122, 69, .5) transparent;
+}
+.sfx-list::-webkit-scrollbar { width: 7px; }
+.sfx-list::-webkit-scrollbar-thumb {
+  border-radius: 99px;
+  background: rgba(255, 122, 69, .55);
+}
+.sfx-empty {
+  padding: 9px 6px;
+  color: var(--dim);
+  font-size: 8px;
+  text-align: center;
+}
+.sfx-track {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  min-width: 0;
+  padding: 4px 5px;
+  border-radius: 5px;
+  background: rgba(255, 255, 255, .02);
+}
+.sfx-track input[type="checkbox"] { flex: none; accent-color: #ff7b4f; }
+.sfx-track .sfx-name {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  color: var(--muted-strong);
+  font-size: 8.2px;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.sfx-track .sfx-size {
+  flex: none;
+  color: var(--dim);
+  font-size: 7px;
+}
+.sfx-track .sfx-icon-btn {
+  flex: none;
+  border: 0;
+  background: transparent;
+  color: var(--dim);
+  font-size: 9px;
+  cursor: pointer;
+  padding: 1px 2px;
+}
+.sfx-track .sfx-icon-btn:hover { color: #ff9a74; }
+.sfx-track .sfx-icon-btn.delete:hover { color: #ff6b6b; }

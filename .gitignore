@@ -25,3 +25,6 @@ vendor-*/
 github-upload/
 tests/tmp-*.js
 *-layout.png
+
+sfx/
+test-sfx-*.wav
