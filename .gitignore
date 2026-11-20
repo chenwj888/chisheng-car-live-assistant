@@ -28,3 +28,5 @@ tests/tmp-*.js
 
 sfx/
 test-sfx-*.wav
+layout-*.png
+*-sticky*.png
