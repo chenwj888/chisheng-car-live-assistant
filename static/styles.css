@@ -3433,3 +3433,175 @@ mark.changed {
   .knowledge-hero { align-items: flex-start; flex-direction: column; }
   .knowledge-side { display: flex; }
 }
+
+
+/* 播放模块：长方形、紧凑，并在滚动时吸附在窗口顶部 */
+.col-side {
+  align-self: stretch;
+}
+.player-card {
+  position: sticky;
+  top: 14px;
+  z-index: 30;
+  align-self: start;
+  box-shadow: 0 18px 48px rgba(0, 0, 0, 0.28);
+}
+.player-card .wave {
+  height: 30px;
+  margin: 8px 0 3px;
+}
+.player-card .now-text {
+  min-height: 48px;
+  max-height: 86px;
+  padding: 2px 2px 4px;
+  font-size: 13px;
+  line-height: 1.65;
+}
+.player-card .transport {
+  gap: 14px;
+  margin: 8px 0;
+}
+.player-card .play-btn {
+  width: 46px;
+  height: 46px;
+}
+.player-card .play-btn svg {
+  width: 19px;
+  height: 19px;
+}
+.player-card .transport-btn {
+  width: 30px;
+  height: 30px;
+}
+.player-card .transport-btn.stop {
+  width: 27px;
+  height: 27px;
+}
+.player-card .play-caption {
+  margin: -2px 0 6px;
+  font-size: 7.5px;
+}
+.player-card .player-actions {
+  padding-top: 7px;
+}
+.player-card .shortcut-hint {
+  margin-top: 7px;
+  font-size: 7px;
+}
+@media (max-width: 1100px) {
+  .player-card {
+    top: 8px;
+  }
+}
+
+
+/* 口播工作台：播放模块改为横向长方形，并吸附在窗口顶部 */
+#scriptView {
+  position: relative;
+}
+#scriptView > .player-card {
+  position: sticky;
+  top: 10px;
+  z-index: 40;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 300px;
+  grid-template-areas:
+    "head head"
+    "text transport"
+    "progress progress"
+    "time actions";
+  column-gap: 26px;
+  row-gap: 3px;
+  align-items: center;
+  width: 100%;
+  margin: 0 0 14px;
+  padding: 13px 18px 11px;
+  border-radius: 12px;
+  box-shadow: 0 18px 46px rgba(0, 0, 0, 0.3);
+}
+#scriptView > .player-card .now-head {
+  grid-area: head;
+  min-width: 0;
+}
+#scriptView > .player-card .wave {
+  display: none;
+}
+#scriptView > .player-card .now-text {
+  grid-area: text;
+  min-height: 46px;
+  max-height: 72px;
+  padding: 0 2px;
+  font-size: 13.5px;
+  line-height: 1.65;
+}
+#scriptView > .player-card .transport {
+  grid-area: transport;
+  justify-content: flex-end;
+  margin: 0;
+  gap: 13px;
+}
+#scriptView > .player-card .play-btn {
+  width: 42px;
+  height: 42px;
+}
+#scriptView > .player-card .play-btn svg {
+  width: 18px;
+  height: 18px;
+}
+#scriptView > .player-card .transport-btn {
+  width: 28px;
+  height: 28px;
+}
+#scriptView > .player-card .transport-btn.stop {
+  width: 26px;
+  height: 26px;
+}
+#scriptView > .player-card .progress-track {
+  grid-area: progress;
+  margin-top: 2px;
+}
+#scriptView > .player-card .time-row {
+  grid-area: time;
+  margin-top: 2px;
+}
+#scriptView > .player-card .play-caption,
+#scriptView > .player-card .shortcut-hint {
+  display: none;
+}
+#scriptView > .player-card .player-actions {
+  grid-area: actions;
+  justify-content: flex-end;
+  gap: 12px;
+  padding: 0;
+  border: 0;
+}
+@media (max-width: 800px) {
+  #scriptView > .player-card {
+    grid-template-columns: minmax(0, 1fr);
+    grid-template-areas:
+      "head"
+      "text"
+      "transport"
+      "progress"
+      "time"
+      "actions";
+    row-gap: 5px;
+    top: 6px;
+  }
+  #scriptView > .player-card .transport {
+    justify-content: flex-start;
+  }
+  #scriptView > .player-card .player-actions {
+    justify-content: flex-start;
+  }
+}
+
+
+/* 吸附时保持不透底，避免看到下方卡片文字 */
+#scriptView > .player-card {
+  background:
+    radial-gradient(circle at 50% -20%, rgba(255, 122, 69, 0.14), transparent 48%),
+    linear-gradient(180deg, rgba(255, 255, 255, 0.045), rgba(255, 255, 255, 0.01)),
+    #111820;
+  backdrop-filter: blur(22px);
+}

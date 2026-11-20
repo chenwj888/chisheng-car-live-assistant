@@ -872,3 +872,10 @@ body.light .session-history { color: #8e99a2; }
 body.light .kb-item-question,
 body.light .pending-question,
 body.light .knowledge-stats b { color: #26343d; }
+
+
+body.light #scriptView > .player-card {
+  background:
+    radial-gradient(circle at 50% -20%, rgba(239, 106, 60, 0.12), transparent 48%),
+    linear-gradient(180deg, #fffaf5, #ffffff 60%);
+}

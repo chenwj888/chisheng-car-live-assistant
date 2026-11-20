@@ -201,6 +201,67 @@
       </section>
 
       <div id="scriptView" class="view-panel">
+          <section class="card player-card" id="playerCard">
+            <div class="now-head">
+              <span class="live-label"><i></i> NOW READING</span>
+              <span class="priority-badge" id="priorityBadge" hidden>公屏回复中</span>
+              <span class="player-model" id="playerModel">通用</span>
+              <span id="queuePos">0 / 0</span>
+            </div>
+
+            <div class="wave" id="wave" aria-hidden="true">
+              <i style="--h:18%;--d:.0s"></i><i style="--h:42%;--d:.12s"></i><i style="--h:66%;--d:.24s"></i>
+              <i style="--h:34%;--d:.06s"></i><i style="--h:82%;--d:.18s"></i><i style="--h:54%;--d:.3s"></i>
+              <i style="--h:94%;--d:.1s"></i><i style="--h:46%;--d:.22s"></i><i style="--h:72%;--d:.34s"></i>
+              <i style="--h:28%;--d:.04s"></i><i style="--h:58%;--d:.16s"></i><i style="--h:88%;--d:.28s"></i>
+              <i style="--h:38%;--d:.08s"></i><i style="--h:64%;--d:.2s"></i><i style="--h:50%;--d:.32s"></i>
+              <i style="--h:76%;--d:.14s"></i><i style="--h:32%;--d:.26s"></i><i style="--h:60%;--d:.38s"></i>
+              <i style="--h:90%;--d:.02s"></i><i style="--h:44%;--d:.15s"></i><i style="--h:70%;--d:.27s"></i>
+              <i style="--h:24%;--d:.09s"></i><i style="--h:56%;--d:.21s"></i><i style="--h:80%;--d:.33s"></i>
+              <i style="--h:36%;--d:.05s"></i><i style="--h:62%;--d:.17s"></i><i style="--h:48%;--d:.29s"></i>
+              <i style="--h:74%;--d:.11s"></i>
+            </div>
+
+            <div class="now-text" id="nowText" aria-live="polite">
+              <span class="now-placeholder">点击“生成播放清单”后<br>当前句子会显示在这里</span>
+            </div>
+
+            <div class="progress-track"><div class="progress-fill" id="progressBar"></div></div>
+            <div class="time-row"><span id="elapsed">0:00</span><span id="remaining">--:--</span></div>
+
+            <div class="transport">
+              <button class="transport-btn" id="prevBtn" type="button" title="上一句 (←)" aria-label="上一句">
+                <svg><use href="#icon-prev"></use></svg>
+              </button>
+              <button class="play-btn" id="playBtn" type="button" title="播放 / 暂停当前车型 (空格)" aria-label="播放">
+                <svg><use id="playUse" href="#icon-play"></use></svg>
+              </button>
+              <button class="transport-btn" id="nextBtn" type="button" title="下一句 (→)" aria-label="下一句">
+                <svg><use href="#icon-next"></use></svg>
+              </button>
+              <button class="transport-btn stop" id="stopBtn" type="button" title="停止 (Esc)" aria-label="停止">
+                <svg><use href="#icon-stop"></use></svg>
+              </button>
+            </div>
+
+            <div class="play-caption">生成清单后点播放；播放时会显示当前车型</div>
+
+            <div class="player-actions">
+              <button class="text-btn" id="queueShuffleBtn2" type="button">
+                <svg><use href="#icon-shuffle"></use></svg>
+                重新洗牌
+              </button>
+              <button class="text-btn" id="testBtn" type="button">
+                <svg><use href="#icon-mic"></use></svg>
+                <span id="testLabel">试听音色</span>
+              </button>
+            </div>
+
+            <div class="shortcut-hint">
+              <span><kbd>空格</kbd> 播放/暂停</span><span><kbd>←</kbd><kbd>→</kbd> 切换</span><span><kbd>Esc</kbd> 停止</span>
+            </div>
+          </section>
+
       <div class="layout">
         <div class="col-main">
           <section class="card strategy-card">
@@ -429,67 +490,6 @@
         </div>
 
         <aside class="col-side">
-          <section class="card player-card" id="playerCard">
-            <div class="now-head">
-              <span class="live-label"><i></i> NOW READING</span>
-              <span class="priority-badge" id="priorityBadge" hidden>公屏回复中</span>
-              <span class="player-model" id="playerModel">通用</span>
-              <span id="queuePos">0 / 0</span>
-            </div>
-
-            <div class="wave" id="wave" aria-hidden="true">
-              <i style="--h:18%;--d:.0s"></i><i style="--h:42%;--d:.12s"></i><i style="--h:66%;--d:.24s"></i>
-              <i style="--h:34%;--d:.06s"></i><i style="--h:82%;--d:.18s"></i><i style="--h:54%;--d:.3s"></i>
-              <i style="--h:94%;--d:.1s"></i><i style="--h:46%;--d:.22s"></i><i style="--h:72%;--d:.34s"></i>
-              <i style="--h:28%;--d:.04s"></i><i style="--h:58%;--d:.16s"></i><i style="--h:88%;--d:.28s"></i>
-              <i style="--h:38%;--d:.08s"></i><i style="--h:64%;--d:.2s"></i><i style="--h:50%;--d:.32s"></i>
-              <i style="--h:76%;--d:.14s"></i><i style="--h:32%;--d:.26s"></i><i style="--h:60%;--d:.38s"></i>
-              <i style="--h:90%;--d:.02s"></i><i style="--h:44%;--d:.15s"></i><i style="--h:70%;--d:.27s"></i>
-              <i style="--h:24%;--d:.09s"></i><i style="--h:56%;--d:.21s"></i><i style="--h:80%;--d:.33s"></i>
-              <i style="--h:36%;--d:.05s"></i><i style="--h:62%;--d:.17s"></i><i style="--h:48%;--d:.29s"></i>
-              <i style="--h:74%;--d:.11s"></i>
-            </div>
-
-            <div class="now-text" id="nowText" aria-live="polite">
-              <span class="now-placeholder">点击“生成播放清单”后<br>当前句子会显示在这里</span>
-            </div>
-
-            <div class="progress-track"><div class="progress-fill" id="progressBar"></div></div>
-            <div class="time-row"><span id="elapsed">0:00</span><span id="remaining">--:--</span></div>
-
-            <div class="transport">
-              <button class="transport-btn" id="prevBtn" type="button" title="上一句 (←)" aria-label="上一句">
-                <svg><use href="#icon-prev"></use></svg>
-              </button>
-              <button class="play-btn" id="playBtn" type="button" title="播放 / 暂停当前车型 (空格)" aria-label="播放">
-                <svg><use id="playUse" href="#icon-play"></use></svg>
-              </button>
-              <button class="transport-btn" id="nextBtn" type="button" title="下一句 (→)" aria-label="下一句">
-                <svg><use href="#icon-next"></use></svg>
-              </button>
-              <button class="transport-btn stop" id="stopBtn" type="button" title="停止 (Esc)" aria-label="停止">
-                <svg><use href="#icon-stop"></use></svg>
-              </button>
-            </div>
-
-            <div class="play-caption">生成清单后点播放；播放时会显示当前车型</div>
-
-            <div class="player-actions">
-              <button class="text-btn" id="queueShuffleBtn2" type="button">
-                <svg><use href="#icon-shuffle"></use></svg>
-                重新洗牌
-              </button>
-              <button class="text-btn" id="testBtn" type="button">
-                <svg><use href="#icon-mic"></use></svg>
-                <span id="testLabel">试听音色</span>
-              </button>
-            </div>
-
-            <div class="shortcut-hint">
-              <span><kbd>空格</kbd> 播放/暂停</span><span><kbd>←</kbd><kbd>→</kbd> 切换</span><span><kbd>Esc</kbd> 停止</span>
-            </div>
-          </section>
-
           <section class="card voice-card">
             <div class="card-head compact">
               <div class="head-title">
