@@ -528,6 +528,7 @@
         await fetchJSON('/api/chat/clear', { method: 'POST', body: '{}', headers: { 'Content-Type': 'application/json' } });
         state.events = [];
         state.lastEventId = 0;
+        state.spokenEvents.clear();
         renderEvents(true);
         toast('互动记录已清空。');
       } catch (_) {

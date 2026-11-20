@@ -184,7 +184,8 @@
     if (message.text && recentSent.has(message.text) && Date.now() - recentSent.get(message.text) < 90000) {
       return;
     }
-    const key = message.messageId || (message.type + '|' + message.nickname + '|' + message.text);
+    // 抖音 DOM 重绘会换 messageId，不能只按 messageId 去重。
+    const key = message.type + '|' + message.nickname + '|' + message.text;
     if (!remember(key)) return;
     log('收到消息', message);
     const response = await api('/api/chat/message', 'POST', {

@@ -68,7 +68,7 @@ DEEPSEEK_LOCK = threading.Lock()
 SESSION_LOCK = threading.Lock()
 CHAT_SESSION_ID = time.strftime("%Y%m%d-%H%M%S")
 CHAT_SESSION_FILE = CHAT_SESSIONS_DIR / (CHAT_SESSION_ID + ".jsonl")
-APP_VERSION = "2.20.1"
+APP_VERSION = "2.20.2"
 
 for folder in (CACHE_DIR, LOG_DIR, DATA_DIR, MUSIC_DIR, SFX_DIR, CHAT_SESSIONS_DIR):
     folder.mkdir(parents=True, exist_ok=True)
@@ -878,10 +878,10 @@ def add_chat_event(event: dict[str, Any]) -> dict[str, Any]:
 
 
 def clear_chat_events() -> None:
-    global CHAT_EVENT_SEQ
+    # 清空显示内容，但事件序号保持单调递增。
+    # 重置为 0 会让浏览器已朗读过的 id 与新事件撞号，清屏后就不读了。
     with CHAT_LOCK:
         CHAT_EVENTS.clear()
-        CHAT_EVENT_SEQ = 0
 
 
 def fill_chat_template(template: str, nickname: str, model: str) -> str:
@@ -918,7 +918,9 @@ def process_chat_message(payload: dict[str, Any]) -> dict[str, Any]:
         return {"ok": False, "error": "empty_text", "message": "消息为空"}
 
     now = time.time()
-    key = message_id or (message_type + "|" + nickname + "|" + text)
+    # 以“类型 + 昵称 + 文本”去重，不能只信扩展传来的 messageId。
+    # 抖音 DOM 重绘会换 messageId，旧逻辑会把同一条公屏当成新消息反复朗读。
+    key = message_type + "|" + nickname + "|" + text
     with CHAT_LOCK:
         if not is_test:
             last_seen = CHAT_SEEN.get(key)
