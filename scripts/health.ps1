@@ -16,7 +16,7 @@ if (Test-Path -LiteralPath $runtime) {
 for ($i = 0; $i -lt 20; $i += 1) {
     try {
         $health = Invoke-RestMethod -Uri ("http://127.0.0.1:" + $port + "/api/health") -TimeoutSec 2
-        if ($health.ok -and $health.app -eq 'chisheng-car-live' -and $health.version -eq '2.20.2') { exit 0 }
+        if ($health.ok -and $health.app -eq 'chisheng-car-live' -and $health.version -eq '2.20.3') { exit 0 }
     } catch {
         # 软件可能还在加载模型或 Python 启动中，继续重试。
     }

@@ -68,7 +68,7 @@ DEEPSEEK_LOCK = threading.Lock()
 SESSION_LOCK = threading.Lock()
 CHAT_SESSION_ID = time.strftime("%Y%m%d-%H%M%S")
 CHAT_SESSION_FILE = CHAT_SESSIONS_DIR / (CHAT_SESSION_ID + ".jsonl")
-APP_VERSION = "2.20.2"
+APP_VERSION = "2.20.3"
 
 for folder in (CACHE_DIR, LOG_DIR, DATA_DIR, MUSIC_DIR, SFX_DIR, CHAT_SESSIONS_DIR):
     folder.mkdir(parents=True, exist_ok=True)
