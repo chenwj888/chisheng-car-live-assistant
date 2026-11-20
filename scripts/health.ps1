@@ -1,4 +1,4 @@
-$ErrorActionPreference = 'SilentlyContinue'
+﻿$ErrorActionPreference = 'SilentlyContinue'
 
 $root = Split-Path -Parent $PSScriptRoot
 $runtime = Join-Path $root 'runtime.json'
@@ -13,10 +13,14 @@ if (Test-Path -LiteralPath $runtime) {
     }
 }
 
-try {
-    $health = Invoke-RestMethod -Uri ("http://127.0.0.1:" + $port + "/api/health") -TimeoutSec 2
-    if ($health.ok -and $health.app -eq 'chisheng-car-live' -and $health.version -eq '2.19.0') { exit 0 }
-    exit 1
-} catch {
-    exit 1
+for ($i = 0; $i -lt 20; $i += 1) {
+    try {
+        $health = Invoke-RestMethod -Uri ("http://127.0.0.1:" + $port + "/api/health") -TimeoutSec 2
+        if ($health.ok -and $health.app -eq 'chisheng-car-live' -and $health.version -eq '2.20.0') { exit 0 }
+    } catch {
+        # 软件可能还在加载模型或 Python 启动中，继续重试。
+    }
+    Start-Sleep -Milliseconds 700
 }
+
+exit 1

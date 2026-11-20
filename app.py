@@ -68,7 +68,7 @@ DEEPSEEK_LOCK = threading.Lock()
 SESSION_LOCK = threading.Lock()
 CHAT_SESSION_ID = time.strftime("%Y%m%d-%H%M%S")
 CHAT_SESSION_FILE = CHAT_SESSIONS_DIR / (CHAT_SESSION_ID + ".jsonl")
-APP_VERSION = "2.19.0"
+APP_VERSION = "2.20.0"
 
 for folder in (CACHE_DIR, LOG_DIR, DATA_DIR, MUSIC_DIR, SFX_DIR, CHAT_SESSIONS_DIR):
     folder.mkdir(parents=True, exist_ok=True)
@@ -2232,11 +2232,19 @@ def start_kokoro_service() -> None:
     if KOKORO_PROCESS is not None and KOKORO_PROCESS.poll() is None:
         return
     service_dir = BASE_DIR / "kokoro-service"
-    python_exe = service_dir / ".venv" / "Scripts" / "python.exe"
+    portable_python = BASE_DIR / "runtime" / "python312" / "python.exe"
+    portable_site = service_dir / "site-packages"
+    venv_python = service_dir / ".venv" / "Scripts" / "python.exe"
+    python_exe = portable_python if portable_python.exists() else venv_python
     main_py = service_dir / "main.py"
     if not python_exe.exists() or not main_py.exists():
         logger.info("未安装 Kokoro 本地语音环境，跳过自动启动。")
         return
+    child_env = os.environ.copy()
+    if portable_python.exists() and portable_site.exists():
+        child_env["PYTHONPATH"] = str(portable_site)
+    child_env["PYTHONUTF8"] = "1"
+    child_env["PYTHONIOENCODING"] = "utf-8"
     if kokoro_port_open():
         logger.info("Kokoro 端口已被其他进程占用，等待其加载完成。")
         return
@@ -2250,6 +2258,7 @@ def start_kokoro_service() -> None:
             stdout=KOKORO_LOG_HANDLE,
             stderr=subprocess.STDOUT,
             creationflags=flags,
+            env=child_env,
         )
         KOKORO_OWNED = True
         logger.info("已自动启动 Kokoro 本地语音服务：%s", KOKORO_URL)

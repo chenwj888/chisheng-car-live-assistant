@@ -1,0 +1,83 @@
+驰声 · 汽车直播口播助手 · 便携版 2.20.0
+
+这个文件夹已经是完整版本，包含：
+- 软件主程序
+- 内置 Python 3.14 运行环境
+- Kokoro 专用 Python 3.12 运行环境和依赖
+- Kokoro 语音模型
+- Edge 自然语音组件（vendor）
+- 静态页面、脚本、说明文档
+- 讲稿、知识库、禁用词、背景音乐、音效等本机数据
+
+不需要安装 Python，也不需要联网安装依赖。
+
+【启动】
+
+双击：
+  Start.cmd
+或：
+  启动软件.cmd
+
+软件会在浏览器中打开：
+  http://127.0.0.1:8765
+
+【停止】
+
+双击：
+  Stop.cmd
+或软件左下角“退出软件”。
+
+【Kokoro 本地语音】
+
+Kokoro 环境已经包含在：
+  runtime\python312
+  kokoro-service\site-packages
+  kokoro-service\models
+
+正常情况下软件启动时会自动拉起 Kokoro，不需要单独操作。
+如需手动启动，双击：
+  Start-Kokoro.cmd
+
+【复制到 U 盘】
+
+直接把整个 CarLiveAssistant 文件夹复制到 U 盘即可。
+不要只复制 app.py 或只复制某个子文件夹。
+
+盘符变化没有影响，所有路径都按软件所在文件夹计算。
+文件夹名可以包含中文；启动脚本已使用 UTF-8 和 %~dp0 相对路径。
+如果 Windows 版本较旧，建议把文件夹放在较短的路径下，例如：
+  U盘根目录\CarLiveAssistant
+
+【数据位置】
+
+data\            讲稿、知识库、禁用词、公屏记录、DeepSeek 设置
+music\           背景音乐
+sfx\             上传的生活音效
+讲稿-...\        原始讲稿文本
+
+升级或换电脑时，复制整个文件夹即可保留这些数据。
+
+【运行要求】
+
+- Windows 10 / 11 64 位
+- 系统自带 Edge 浏览器（用于打开软件界面）
+- 允许软件访问本机 127.0.0.1
+- 如果使用抖音公屏扩展，需要在扩展管理页重新加载 douyin-extension
+
+【端口】
+
+默认端口 8765。若被占用，可编辑 runtime.json 改成 8766 等，
+或运行：
+  runtime\python314\python.exe app.py --port 8766
+
+【DeepSeek】
+
+在“问答知识库”页填写 API Key 后启用。
+Key 只保存在本机 data\deepseek.json，不会上传到网络或 GitHub。
+
+【注意】
+
+- 便携版包含 Python 运行库，文件夹约 1GB，请预留空间。
+- 不要删除 runtime 或 kokoro-service\site-packages。
+- 不要用“覆盖旧版 app.py”的方式升级；请整体替换文件夹，
+  或者只替换源码、保留 data/music/sfx/讲稿。

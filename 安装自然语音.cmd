@@ -2,14 +2,18 @@
 setlocal
 cd /d "%~dp0"
 
-where python >nul 2>nul
-if errorlevel 1 (
-  echo.
-  echo Python was not found.
-  echo Install Python 3.10 or newer and enable "Add Python to PATH".
-  echo.
-  pause
-  exit /b 1
+set "PY=%~dp0runtime\python314\python.exe"
+if not exist "%PY%" (
+  where python >nul 2>nul
+  if errorlevel 1 (
+    echo.
+    echo Python was not found.
+    echo Install Python 3.10 or newer and enable "Add Python to PATH".
+    echo.
+    pause
+    exit /b 1
+  )
+  set "PY=python"
 )
 
 for /f %%i in ('powershell -NoProfile -Command "Get-Date -Format yyyyMMdd-HHmmss"') do set "STAMP=%%i"
@@ -28,7 +32,7 @@ echo.
 echo Installing into a new folder, so a running app is not touched...
 echo.
 
-python -m pip install --target "%STAGING%" edge-tts
+"%PY%" -m pip install --target "%STAGING%" edge-tts
 if errorlevel 1 (
   echo.
   echo Installation failed. Common causes:
@@ -44,7 +48,7 @@ if errorlevel 1 (
 
 echo.
 echo Verifying...
-python -c "import sys; sys.path.insert(0, r'%STAGING%'); import edge_tts; print('edge-tts installed: ' + getattr(edge_tts, '__version__', 'unknown'))"
+"%PY%" -c "import sys; sys.path.insert(0, r'%STAGING%'); import edge_tts; print('edge-tts installed: ' + getattr(edge_tts, '__version__', 'unknown'))"
 if errorlevel 1 (
   echo.
   echo Download completed but import failed. Check the log or use local voices.

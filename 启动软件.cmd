@@ -1,9 +1,15 @@
 @echo off
 setlocal
+chcp 65001 >nul
 cd /d "%~dp0"
+set "PYTHONUTF8=1"
+set "PYTHONIOENCODING=utf-8"
 
-set "PYW="
-where pythonw >nul 2>nul && set "PYW=pythonw"
+set "PYW=%~dp0runtime\python314\pythonw.exe"
+if not exist "%PYW%" set "PYW="
+if not defined PYW (
+  where pythonw >nul 2>nul && set "PYW=pythonw"
+)
 if not defined PYW (
   where pyw >nul 2>nul && set "PYW=pyw"
 )
