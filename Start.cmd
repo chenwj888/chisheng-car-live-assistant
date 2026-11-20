@@ -2,6 +2,8 @@
 setlocal
 chcp 65001 >nul
 cd /d "%~dp0"
+set "PYTHONHOME="
+set "PYTHONPATH="
 set "PYTHONUTF8=1"
 set "PYTHONIOENCODING=utf-8"
 set "PYW=%~dp0runtime\python314\pythonw.exe"

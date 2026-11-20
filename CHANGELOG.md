@@ -2,6 +2,11 @@
 
 本仓库从 `2.13.0` 起按版本号打 Git 标签；每个版本对应一个 `vX.Y.Z` 标签，GitHub 的 Tags / Releases 可以直接区分。
 
+## v2.20.1
+
+- 便携启动脚本重试健康检查，清理继承的 PYTHONHOME/PYTHONPATH。
+- 完善 U 盘中文路径说明。
+
 ## v2.20.0
 
 - 便携版：内置 Python 3.14 / 3.12、Kokoro 依赖、模型、vendor、文本与数据。

@@ -68,7 +68,7 @@ DEEPSEEK_LOCK = threading.Lock()
 SESSION_LOCK = threading.Lock()
 CHAT_SESSION_ID = time.strftime("%Y%m%d-%H%M%S")
 CHAT_SESSION_FILE = CHAT_SESSIONS_DIR / (CHAT_SESSION_ID + ".jsonl")
-APP_VERSION = "2.20.0"
+APP_VERSION = "2.20.1"
 
 for folder in (CACHE_DIR, LOG_DIR, DATA_DIR, MUSIC_DIR, SFX_DIR, CHAT_SESSIONS_DIR):
     folder.mkdir(parents=True, exist_ok=True)
@@ -2241,6 +2241,7 @@ def start_kokoro_service() -> None:
         logger.info("未安装 Kokoro 本地语音环境，跳过自动启动。")
         return
     child_env = os.environ.copy()
+    child_env.pop("PYTHONHOME", None)
     if portable_python.exists() and portable_site.exists():
         child_env["PYTHONPATH"] = str(portable_site)
     child_env["PYTHONUTF8"] = "1"
