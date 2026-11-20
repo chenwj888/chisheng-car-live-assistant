@@ -216,7 +216,7 @@
       'musicFileInput', 'musicList',
       'serverPill', 'engineMiniState', 'engineMiniText', 'exitBtn', 'helpBtn', 'topHelpBtn', 'blockedBtn', 'blockedPanel',
       'topEyebrow', 'topTitle', 'topSubtitle', 'scriptView', 'chatView',
-      'navScript', 'navScriptStudio', 'navChat', 'navQueue', 'scriptStudioView', 'openScriptStudioBtn',
+      'navScript', 'navScriptStudio', 'navChat', 'navKnowledge', 'navQueue', 'scriptStudioView', 'knowledgeView', 'openScriptStudioBtn',
       'toast', 'helpDialog', 'closeHelpBtn', 'helpDoneBtn'
     ].forEach(function (id) { els[id] = $(id); });
   }
@@ -4335,6 +4335,11 @@
       title: '脚本工作台',
       subtitle: '整理各车型讲稿；离开这个页面时内容会留在后台，不会丢失。'
     },
+    knowledge: {
+      eyebrow: 'LIVE Q&A KNOWLEDGE / 2026',
+      title: '问答知识库',
+      subtitle: '公屏问题按关键词、本地知识库、DeepSeek 递进查找；找不到就人工回复并入库。'
+    },
     chat: {
       eyebrow: 'LIVE CHAT ASSIST / DOUYIN',
       title: '直播互动',
@@ -4345,26 +4350,29 @@
   function switchView(view, options) {
     const opts = options || {};
     const isChat = view === 'chat';
+    const isKnowledge = view === 'knowledge';
     const isStudio = view === 'scriptStudio';
-    const isScript = !isChat && !isStudio;
+    const isScript = !isChat && !isKnowledge && !isStudio;
     if (els.scriptView) els.scriptView.hidden = !isScript;
     if (els.scriptStudioView) els.scriptStudioView.hidden = !isStudio;
     if (els.chatView) els.chatView.hidden = !isChat;
+    if (els.knowledgeView) els.knowledgeView.hidden = !isKnowledge;
     document.body.classList.toggle('chat-view-mode', isChat);
 
-    [els.navScript, els.navScriptStudio, els.navChat, els.navQueue].forEach(function (button) {
+    [els.navScript, els.navScriptStudio, els.navChat, els.navKnowledge, els.navQueue].forEach(function (button) {
       if (!button) return;
       button.classList.remove('active');
     });
-    const activeNav = isChat ? els.navChat : (isStudio ? els.navScriptStudio : els.navScript);
+    const activeNav = isChat ? els.navChat : (isKnowledge ? els.navKnowledge : (isStudio ? els.navScriptStudio : els.navScript));
     if (activeNav) activeNav.classList.add('active');
 
-    const copy = VIEW_COPY[isChat ? 'chat' : (isStudio ? 'scriptStudio' : 'script')];
+    const copy = VIEW_COPY[isChat ? 'chat' : (isKnowledge ? 'knowledge' : (isStudio ? 'scriptStudio' : 'script'))];
     if (els.topEyebrow) els.topEyebrow.textContent = copy.eyebrow;
     if (els.topTitle) els.topTitle.textContent = copy.title;
     if (els.topSubtitle) els.topSubtitle.textContent = copy.subtitle;
     if (els.serverPill) els.serverPill.hidden = isChat;
 
+    if (isKnowledge && window.KnowledgeUI) window.KnowledgeUI.refresh();
     if (window.CarLiveChat) {
       if (isChat) {
         Promise.resolve(window.CarLiveChat.show()).then(function () {
@@ -4963,6 +4971,9 @@
     }
     if (els.navChat) {
       els.navChat.addEventListener('click', function () { switchView('chat'); });
+    }
+    if (els.navKnowledge) {
+      els.navKnowledge.addEventListener('click', function () { switchView('knowledge'); });
     }
     if (els.navQueue) {
       els.navQueue.addEventListener('click', function () {

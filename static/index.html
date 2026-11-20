@@ -71,15 +71,20 @@
           <span>直播互动</span>
           <i>03</i>
         </button>
+        <button class="nav-item" id="navKnowledge" type="button" data-view="knowledge">
+          <svg><use href="#icon-doc"></use></svg>
+          <span>问答知识库</span>
+          <i>04</i>
+        </button>
         <button class="nav-item" id="navQueue" type="button" data-view="script" data-scroll-target="queueCard">
           <svg><use href="#icon-queue"></use></svg>
           <span>播放清单</span>
-          <i>04</i>
+          <i>05</i>
         </button>
         <button class="nav-item" id="helpBtn" type="button">
           <svg><use href="#icon-help"></use></svg>
           <span>使用说明</span>
-          <i>05</i>
+          <i>06</i>
         </button>
       </nav>
 
@@ -779,6 +784,97 @@
       </div>
       </div>
 
+      <section class="knowledge-view" id="knowledgeView" hidden>
+        <div class="knowledge-hero">
+          <div>
+            <span class="kicker">LIVE Q&amp;A KNOWLEDGE</span>
+            <h2>把问题沉淀成答案</h2>
+            <p>公屏问题先查关键词，再查本地知识库，最后可交给 DeepSeek；人工回复会沉淀成新知识。</p>
+          </div>
+          <div class="knowledge-stats">
+            <div><b id="kbCount">0</b><span>知识条目</span></div>
+            <div><b id="kbPendingCount">0</b><span>待人工回复</span></div>
+            <div><b id="kbSessionCount">0</b><span>本场问题</span></div>
+          </div>
+        </div>
+
+        <div class="knowledge-layout">
+          <section class="card kb-card">
+            <div class="card-head">
+              <div class="head-title">
+                <span class="section-no">01</span>
+                <div><span class="kicker">KNOWLEDGE</span><h2>知识库条目</h2></div>
+              </div>
+              <button class="btn small ghost" id="kbRefreshBtn" type="button">刷新</button>
+            </div>
+            <div class="kb-search-row">
+              <input type="search" id="kbSearchInput" placeholder="搜索问题、关键词、答案…">
+            </div>
+            <div class="kb-editor">
+              <input type="text" id="kbQuestion" placeholder="标准问题，例如：雅阁现在有什么优惠？">
+              <input type="text" id="kbKeywords" placeholder="关键词，用逗号分隔，例如：雅阁,优惠,价格">
+              <textarea id="kbAnswer" rows="3" placeholder="标准答案：口语化、可直接朗读，不要写未确认的政策。"></textarea>
+              <div class="kb-editor-actions">
+                <button class="btn small primary" id="kbAddBtn" type="button">加入知识库</button>
+                <span class="kb-hint">保存后，公屏命中会自动朗读。</span>
+              </div>
+            </div>
+            <div class="kb-list" id="kbList"></div>
+          </section>
+
+          <div class="knowledge-side">
+            <section class="card pending-card">
+              <div class="card-head compact">
+                <div class="head-title">
+                  <span class="section-no">02</span>
+                  <div><span class="kicker">NEEDS ANSWER</span><h2>待人工回复 <em id="pendingCount">0</em></h2></div>
+                </div>
+                <button class="btn small ghost" id="pendingRefreshBtn" type="button">刷新</button>
+              </div>
+              <p class="kb-hint">这些是没有找到答案的问题。填写回复后会直接加入知识库。</p>
+              <div class="pending-list" id="pendingList"></div>
+            </section>
+
+            <section class="card deepseek-card">
+              <div class="card-head compact">
+                <div class="head-title">
+                  <span class="section-no">03</span>
+                  <div><span class="kicker">DEEPSEEK</span><h2>大模型兜底</h2></div>
+                </div>
+                <label class="switch"><input type="checkbox" id="deepseekEnabled"><span></span></label>
+              </div>
+              <div class="deepseek-fields">
+                <label class="field"><span>API Key</span><input type="password" id="deepseekKey" placeholder="sk-..."></label>
+                <label class="field"><span>模型</span><input type="text" id="deepseekModel" placeholder="deepseek-chat"></label>
+                <label class="field"><span>Base URL</span><input type="text" id="deepseekBase" placeholder="https://api.deepseek.com"></label>
+              </div>
+              <div class="deepseek-actions">
+                <button class="btn small" id="deepseekSaveBtn" type="button">保存设置</button>
+                <button class="btn small ghost" id="deepseekTestBtn" type="button">测试回答</button>
+              </div>
+              <input type="text" id="deepseekTestQuestion" placeholder="测试问题，例如：雅阁有现车吗？">
+              <p class="kb-hint" id="deepseekState">按“关键词 → 本地知识库 → DeepSeek → 兜底话术”递进查询。</p>
+            </section>
+
+            <section class="card session-card">
+              <div class="card-head compact">
+                <div class="head-title">
+                  <span class="section-no">04</span>
+                  <div><span class="kicker">SESSION LOG</span><h2>本场公屏记录</h2></div>
+                </div>
+                <button class="btn small ghost" id="sessionRefreshBtn" type="button">刷新</button>
+              </div>
+              <p class="kb-hint" id="sessionPath">当前场次：—</p>
+              <div class="session-list" id="sessionCurrentList"></div>
+              <div class="session-actions">
+                <button class="btn small ghost" id="sessionDownloadBtn" type="button">下载本场记录</button>
+              </div>
+              <div class="session-history" id="sessionHistory"></div>
+            </section>
+          </div>
+        </div>
+      </section>
+
       <section class="chat-view" id="chatView" hidden>
         <div class="chat-hero">
           <div class="chat-hero-copy">
@@ -872,6 +968,10 @@
               <div class="chat-switch-row">
                 <div><b>欢迎新观众</b><small>检测到“来了 / 进入直播间”时发送欢迎语。</small></div>
                 <label class="switch"><input type="checkbox" id="chatWelcomeToggle" checked><span></span></label>
+              </div>
+              <div class="chat-switch-row">
+                <div><b>欢迎语自动上屏</b><small>有人进入直播间时，把欢迎语输入抖音公屏；语音同时播报。</small></div>
+                <label class="switch"><input type="checkbox" id="chatWelcomeAutoToggle" checked><span></span></label>
               </div>
               <div class="chat-switch-row">
                 <div><b>语音播报回复</b><small>公屏有新消息时暂停讲稿，先读出回复，再继续。</small></div>
@@ -1077,5 +1177,6 @@
   <script src="core.js"></script>
   <script src="app.js"></script>
   <script src="chat.js"></script>
+  <script src="knowledge.js"></script>
 </body>
 </html>

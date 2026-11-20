@@ -57,7 +57,7 @@ async function callApi(path, method, body) {
       options.headers = { 'Content-Type': 'application/json' };
       options.body = JSON.stringify(body);
     }
-    return fetchJSON(base + path, options);
+    return fetchJSON(base + path, options, path === '/api/chat/message' ? 15000 : 4000);
   };
   try {
     return await doFetch();

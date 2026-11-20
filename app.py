@@ -19,6 +19,7 @@ import json
 import logging
 import mimetypes
 import os
+import random
 import re
 import shutil
 import socket
@@ -32,9 +33,11 @@ import uuid
 import webbrowser
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from pathlib import Path
+from difflib import SequenceMatcher
 from typing import Any, Optional
 from urllib.parse import parse_qs, unquote, urlparse
 from xml.sax.saxutils import escape as xml_escape
+from knowledge_service import KnowledgeService
 
 BASE_DIR = Path(__file__).resolve().parent
 STATIC_DIR = BASE_DIR / "static"
@@ -53,11 +56,21 @@ VENDOR_DIR = BASE_DIR / "vendor"
 RUNTIME_FILE = BASE_DIR / "runtime.json"
 STATE_FILE = DATA_DIR / "state.json"
 CHAT_FILE = DATA_DIR / "chat.json"
+KNOWLEDGE_FILE = DATA_DIR / "knowledge.json"
+PENDING_FILE = DATA_DIR / "chat_pending.json"
+DEEPSEEK_FILE = DATA_DIR / "deepseek.json"
+CHAT_SESSIONS_DIR = DATA_DIR / "chat-sessions"
 BLOCKLIST_FILE = DATA_DIR / "blocklist.json"
 BLOCKLIST_BACKUP_FILE = DATA_DIR / "blocklist.backup.json"
-APP_VERSION = "2.18.1"
+KNOWLEDGE_LOCK = threading.Lock()
+PENDING_LOCK = threading.Lock()
+DEEPSEEK_LOCK = threading.Lock()
+SESSION_LOCK = threading.Lock()
+CHAT_SESSION_ID = time.strftime("%Y%m%d-%H%M%S")
+CHAT_SESSION_FILE = CHAT_SESSIONS_DIR / (CHAT_SESSION_ID + ".jsonl")
+APP_VERSION = "2.19.0"
 
-for folder in (CACHE_DIR, LOG_DIR, DATA_DIR, MUSIC_DIR, SFX_DIR):
+for folder in (CACHE_DIR, LOG_DIR, DATA_DIR, MUSIC_DIR, SFX_DIR, CHAT_SESSIONS_DIR):
     folder.mkdir(parents=True, exist_ok=True)
 
 try:
@@ -707,6 +720,7 @@ def default_chat_config() -> dict[str, Any]:
         "autoSend": False,
         "voiceReply": True,
         "welcomeEnabled": True,
+        "welcomeAutoSend": True,
         "welcomeTemplate": "欢迎 {昵称} 来到直播间！想看哪款车，直接把车型打在公屏上～",
         "minIntervalSec": 8,
         "maxPerMinute": 6,
@@ -771,7 +785,7 @@ def sanitize_chat_config(raw: Any) -> dict[str, Any]:
     if not isinstance(raw, dict):
         return cfg
 
-    for key in ("enabled", "autoSend", "voiceReply", "welcomeEnabled"):
+    for key in ("enabled", "autoSend", "voiceReply", "welcomeEnabled", "welcomeAutoSend"):
         if key in raw:
             cfg[key] = bool(raw[key])
     if "welcomeTemplate" in raw:
@@ -889,6 +903,9 @@ def find_chat_reply(config: dict[str, Any], text: str, message_type: str) -> tup
     return "", ""
 
 
+KNOWLEDGE = KnowledgeService(BASE_DIR, sanitize_blocked, fill_chat_template, logger)
+
+
 def process_chat_message(payload: dict[str, Any]) -> dict[str, Any]:
     global CHAT_LAST_SENT
     config = load_chat_config()
@@ -902,7 +919,6 @@ def process_chat_message(payload: dict[str, Any]) -> dict[str, Any]:
 
     now = time.time()
     key = message_id or (message_type + "|" + nickname + "|" + text)
-
     with CHAT_LOCK:
         if not is_test:
             last_seen = CHAT_SEEN.get(key)
@@ -915,20 +931,29 @@ def process_chat_message(payload: dict[str, Any]) -> dict[str, Any]:
                     CHAT_SEEN.pop(old_key, None)
 
     reply = ""
-    rule_id = "welcome" if message_type == "welcome" else ""
+    answer_source = "welcome" if message_type == "welcome" else "fallback"
+    answer_level = 0
+    matched_id = "welcome" if message_type == "welcome" else ""
     if message_type == "welcome" and config.get("welcomeEnabled"):
-        reply = fill_chat_template(
-            config.get("welcomeTemplate", ""), nickname, config.get("currentModel", "")
-        )
+        reply = fill_chat_template(config.get("welcomeTemplate", ""), nickname, config.get("currentModel", ""))
     elif message_type == "chat":
-        reply, rule_id = find_chat_reply(config, text, message_type)
-        if reply:
-            reply = fill_chat_template(reply, nickname, config.get("currentModel", ""))
+        result = KNOWLEDGE.resolve(text, config, nickname, is_test)
+        reply = result.get("reply", "")
+        answer_source = result.get("source", "fallback")
+        answer_level = int(result.get("level") or 0)
+        matched_id = result.get("ref", "")
 
     had_reply = bool(reply)
     reply = sanitize_blocked(reply)
     safe_nickname = sanitize_blocked(nickname) or "观众"
     safe_text = sanitize_blocked(text)
+    if message_type == "chat" and not reply and config.get("enabled", True):
+        reply = sanitize_blocked(KNOWLEDGE.fallback_reply())
+        answer_source = "fallback"
+        answer_level = 6
+        matched_id = ""
+        had_reply = True
+    unanswered = message_type == "chat" and answer_source == "fallback"
 
     action = "ignore"
     reason = "no_match"
@@ -939,6 +964,9 @@ def process_chat_message(payload: dict[str, Any]) -> dict[str, Any]:
     elif is_test:
         action = "suggest"
         reason = "test"
+    elif message_type == "welcome" and config.get("welcomeAutoSend", True):
+        action = "send"
+        reason = "welcome_auto"
     elif not config.get("autoSend", False):
         action = "suggest"
         reason = "suggest_only"
@@ -975,10 +1003,29 @@ def process_chat_message(payload: dict[str, Any]) -> dict[str, Any]:
             "reply": reply,
             "action": action,
             "reason": reason,
-            "ruleId": rule_id,
+            "ruleId": matched_id,
+            "answerSource": answer_source,
+            "answerLevel": answer_level,
+            "unanswered": unanswered,
+            "sessionId": KNOWLEDGE.session_id,
             "source": "test" if is_test else str(payload.get("source") or "extension")[:30],
         })
         event_id = event["id"]
+
+    if not is_test:
+        if unanswered and safe_text:
+            KNOWLEDGE.add_pending(safe_text, safe_nickname, event_id)
+        KNOWLEDGE.append_session({
+            "eventId": event_id,
+            "type": message_type,
+            "nickname": safe_nickname,
+            "question": safe_text,
+            "reply": reply,
+            "answerSource": answer_source,
+            "answerLevel": answer_level,
+            "unanswered": unanswered,
+            "action": action,
+        })
 
     return {
         "ok": True,
@@ -986,6 +1033,8 @@ def process_chat_message(payload: dict[str, Any]) -> dict[str, Any]:
         "action": action,
         "reply": reply,
         "reason": reason,
+        "answerSource": answer_source,
+        "unanswered": unanswered,
         "autoSend": bool(config.get("autoSend", False)),
     }
 
@@ -1195,6 +1244,81 @@ class AppHandler(BaseHTTPRequestHandler):
             json_response(self, 200, {"ok": True, "events": events, "lastId": last_id})
             return
 
+        if path == "/api/knowledge/list":
+            query = parse_qs(parsed.query)
+            text = str((query.get("q") or [""])[0] or "").strip()
+            entries = KNOWLEDGE.load_entries()
+            if text:
+                needle = text.lower()
+                entries = [
+                    entry for entry in entries
+                    if needle in entry.get("question", "").lower()
+                    or needle in " ".join(entry.get("keywords", [])).lower()
+                    or needle in entry.get("answer", "").lower()
+                ]
+            pending = [item for item in KNOWLEDGE.load_pending() if item.get("status") == "open"]
+            json_response(self, 200, {
+                "ok": True,
+                "entries": list(reversed(entries)),
+                "total": len(entries),
+                "pending": len(pending),
+                "sessionId": KNOWLEDGE.session_id,
+            })
+            return
+
+        if path == "/api/knowledge/pending":
+            items = [item for item in KNOWLEDGE.load_pending() if item.get("status") == "open"]
+            json_response(self, 200, {"ok": True, "items": list(reversed(items))})
+            return
+
+        if path == "/api/deepseek/config":
+            json_response(self, 200, {"ok": True, "config": KNOWLEDGE.load_deepseek()})
+            return
+
+        if path == "/api/chat/sessions":
+            json_response(self, 200, {
+                "ok": True,
+                "sessionId": KNOWLEDGE.session_id,
+                "sessions": KNOWLEDGE.summaries(),
+            })
+            return
+
+        if path == "/api/chat/session/current":
+            query = parse_qs(parsed.query)
+            try:
+                limit = int((query.get("limit") or ["80"])[0])
+            except Exception:
+                limit = 80
+            json_response(self, 200, {
+                "ok": True,
+                "sessionId": KNOWLEDGE.session_id,
+                "file": KNOWLEDGE.session_file.name,
+                "records": KNOWLEDGE.current_records(limit),
+                "sessions": KNOWLEDGE.summaries(),
+            })
+            return
+
+        if path.startswith("/api/chat/session/file/"):
+            name = unquote(path.rsplit("/", 1)[-1])
+            if not re.match(r"^[0-9A-Za-z_-]+\.jsonl$", name):
+                json_response(self, 404, {"error": "not_found", "message": "记录文件不存在"})
+                return
+            file_path = KNOWLEDGE.sessions_dir / name
+            if not file_path.exists():
+                json_response(self, 404, {"error": "not_found", "message": "记录文件不存在"})
+                return
+            data = file_path.read_bytes()
+            self.send_response(200)
+            self.send_header("Content-Type", "application/x-ndjson; charset=utf-8")
+            self.send_header("Content-Disposition", 'attachment; filename="' + name + '"')
+            self.send_header("Content-Length", str(len(data)))
+            self.end_headers()
+            try:
+                self.wfile.write(data)
+            except (BrokenPipeError, ConnectionAbortedError, ConnectionResetError):
+                pass
+            return
+
         if path == "/favicon.ico":
             self.send_response(204)
             self.send_header("Content-Length", "0")
@@ -1244,6 +1368,123 @@ class AppHandler(BaseHTTPRequestHandler):
             json_response(self, 200, {"ok": True})
             threading.Timer(0.35, self.httpd.shutdown).start()
             return
+
+        if parsed.path in ("/api/knowledge/add", "/api/knowledge/update", "/api/knowledge/delete", "/api/knowledge/pending/answer", "/api/knowledge/pending/dismiss", "/api/deepseek/config", "/api/deepseek/test"):
+            length = int(self.headers.get("Content-Length") or 0)
+            if length <= 0 or length > 200_000:
+                json_response(self, 400, {"error": "bad_request", "message": "请求内容为空或过大"})
+                return
+            try:
+                payload = json.loads(self.rfile.read(length).decode("utf-8"))
+            except Exception:
+                json_response(self, 400, {"error": "bad_json", "message": "请求格式不正确"})
+                return
+
+            if parsed.path == "/api/deepseek/config":
+                saved = KNOWLEDGE.save_deepseek(payload)
+                json_response(self, 200, {"ok": True, "config": saved})
+                return
+
+            if parsed.path == "/api/deepseek/test":
+                question = str(payload.get("question") or "这台车现在有什么优惠").strip()[:300]
+                answer = KNOWLEDGE.deepseek_answer(question, KNOWLEDGE.load_entries()[:5])
+                json_response(self, 200, {
+                    "ok": True,
+                    "configured": bool(KNOWLEDGE.load_deepseek().get("apiKey")),
+                    "answer": answer,
+                    "message": answer or "没有返回可用回答，请检查 Key、网络，或模型认为资料不足。",
+                })
+                return
+
+            if parsed.path == "/api/knowledge/pending/answer":
+                item_id = str(payload.get("id") or "").strip()
+                answer = str(payload.get("answer") or "").strip()[:1200]
+                if not item_id or not answer:
+                    json_response(self, 400, {"error": "bad_answer", "message": "请填写人工回复"})
+                    return
+                with KNOWLEDGE.pending_lock:
+                    items = KNOWLEDGE.load_pending()
+                    target = next((item for item in items if item.get("id") == item_id), None)
+                    if not target:
+                        json_response(self, 404, {"error": "not_found", "message": "这条问题已不存在"})
+                        return
+                    question = str(payload.get("question") or target.get("question") or "").strip()
+                    entry = KNOWLEDGE.add_entry({
+                        "question": question,
+                        "answer": answer,
+                        "keywords": payload.get("keywords") or question,
+                        "category": "人工回复",
+                        "source": "manual_reply",
+                    })
+                    if not entry:
+                        json_response(self, 400, {"error": "bad_entry", "message": "知识库条目格式不正确"})
+                        return
+                    for item in items:
+                        if item.get("id") == item_id:
+                            item["status"] = "resolved"
+                            item["resolvedAt"] = int(time.time() * 1000)
+                    KNOWLEDGE.save_pending(items)
+                sent = False
+                if bool(payload.get("sendToChat")):
+                    safe_nickname = sanitize_blocked(str(target.get("nickname") or "观众")) or "观众"
+                    safe_question = sanitize_blocked(question)
+                    safe_answer = sanitize_blocked(answer)
+                    with CHAT_LOCK:
+                        manual_event = add_chat_event({
+                            "type": "chat",
+                            "nickname": safe_nickname,
+                            "text": safe_question,
+                            "reply": safe_answer,
+                            "action": "send",
+                            "reason": "manual_reply",
+                            "ruleId": "manual_reply",
+                            "answerSource": "manual_reply",
+                            "answerLevel": 2,
+                            "unanswered": False,
+                            "sessionId": KNOWLEDGE.session_id,
+                            "source": "manual",
+                        })
+                    KNOWLEDGE.append_session({
+                        "eventId": manual_event["id"],
+                        "type": "chat",
+                        "nickname": safe_nickname,
+                        "question": safe_question,
+                        "reply": safe_answer,
+                        "answerSource": "manual_reply",
+                        "answerLevel": 2,
+                        "unanswered": False,
+                        "action": "send",
+                    })
+                    sent = True
+                json_response(self, 200, {"ok": True, "entry": entry, "sent": sent, "pending": len([item for item in items if item.get("status") == "open"])})
+                return
+
+            if parsed.path == "/api/knowledge/pending/dismiss":
+                item_id = str(payload.get("id") or "").strip()
+                with KNOWLEDGE.pending_lock:
+                    items = KNOWLEDGE.load_pending()
+                    for item in items:
+                        if item.get("id") == item_id:
+                            item["status"] = "dismissed"
+                            item["resolvedAt"] = int(time.time() * 1000)
+                            break
+                    KNOWLEDGE.save_pending(items)
+                json_response(self, 200, {"ok": True})
+                return
+
+            if parsed.path == "/api/knowledge/delete":
+                entry_id = str(payload.get("id") or "").strip()
+                total = KNOWLEDGE.delete_entry(entry_id)
+                json_response(self, 200, {"ok": True, "total": total})
+                return
+
+            if parsed.path in ("/api/knowledge/add", "/api/knowledge/update"):
+                entry = KNOWLEDGE.add_entry(payload)
+                if not entry:
+                    json_response(self, 400, {"error": "bad_entry", "message": "请填写问题和答案"})
+                    return
+                json_response(self, 200, {"ok": True, "entry": entry, "total": len(KNOWLEDGE.load_entries())})
+                return
 
         if parsed.path.startswith("/api/chat/"):
             length = int(self.headers.get("Content-Length") or 0)
@@ -2111,3 +2352,4 @@ def main() -> int:
 
 if __name__ == "__main__":
     sys.exit(main())
+

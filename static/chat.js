@@ -26,7 +26,7 @@
     [
       'chatView', 'chatConn', 'chatModel', 'chatRoom', 'chatCount', 'chatFeed',
       'chatClearBtn', 'chatMode', 'chatEnabledToggle', 'chatAutoSendToggle',
-      'chatWelcomeToggle', 'chatVoiceToggle', 'welcomeTemplate', 'minIntervalSec', 'maxPerMinute',
+      'chatWelcomeToggle', 'chatWelcomeAutoToggle', 'chatVoiceToggle', 'welcomeTemplate', 'minIntervalSec', 'maxPerMinute',
       'userCooldownSec', 'saveChatBtn', 'testNickname', 'testText',
       'testWelcomeBtn', 'testQuestionBtn', 'testResult', 'rulesList', 'ruleCount',
       'addRuleBtn', 'openDouyinBtn', 'extHelpBtn', 'extensionHint',
@@ -84,6 +84,7 @@
     els.chatEnabledToggle.checked = Boolean(config.enabled);
     els.chatAutoSendToggle.checked = Boolean(config.autoSend);
     els.chatWelcomeToggle.checked = Boolean(config.welcomeEnabled);
+    if (els.chatWelcomeAutoToggle) els.chatWelcomeAutoToggle.checked = config.welcomeAutoSend !== false;
     els.chatVoiceToggle.checked = config.voiceReply !== false;
     els.welcomeTemplate.value = config.welcomeTemplate || '';
     els.minIntervalSec.value = String(config.minIntervalSec || 8);
@@ -361,6 +362,7 @@
       enabled: els.chatEnabledToggle.checked,
       autoSend: els.chatAutoSendToggle.checked,
       welcomeEnabled: els.chatWelcomeToggle.checked,
+      welcomeAutoSend: els.chatWelcomeAutoToggle ? els.chatWelcomeAutoToggle.checked : true,
       voiceReply: els.chatVoiceToggle.checked,
       welcomeTemplate: els.welcomeTemplate.value.trim(),
       minIntervalSec: Number(els.minIntervalSec.value),

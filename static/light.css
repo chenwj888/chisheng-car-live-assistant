@@ -853,3 +853,22 @@ body.light .sfx-list {
 body.light .sfx-track { background: #fffdf9; }
 body.light .sfx-track .sfx-name { color: #5f6b74; }
 body.light .sfx-count { color: #5f6b74; }
+
+
+body.light .knowledge-stats div,
+body.light .kb-editor,
+body.light .kb-item,
+body.light .pending-item,
+body.light .session-item {
+  border-color: #eee5da;
+  background: #fbf8f3;
+}
+body.light .knowledge-hero p,
+body.light .kb-hint,
+body.light .kb-item-meta,
+body.light .kb-item-answer,
+body.light .session-item span,
+body.light .session-history { color: #8e99a2; }
+body.light .kb-item-question,
+body.light .pending-question,
+body.light .knowledge-stats b { color: #26343d; }
